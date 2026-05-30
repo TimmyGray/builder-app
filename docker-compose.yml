@@ -1,0 +1,29 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: builder-app-mysql
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: builder_app
+      MYSQL_USER: builder
+      MYSQL_PASSWORD: builder
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin:5-apache
+    container_name: builder-app-phpmyadmin
+    restart: unless-stopped
+    depends_on:
+      - mysql
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+
+volumes:
+  mysql_data:
