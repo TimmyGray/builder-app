@@ -3,7 +3,7 @@
 > **Summary:** Every config key, its YAML location, its environment-variable override, and the all-important `NODE_CONFIG_DIR`.
 > **Read this when:** You're configuring the app or debugging a "config missing" error.
 > **Audience:** both
-> **Related:** [Getting Started](../guides/getting-started.md) · [Deployment](../guides/deployment.md)
+> **Related:** [Getting Started](../guides/getting-started.md) · [Deployment](../guides/deployment.md) · [Frontend guide](../guides/frontend.md)
 
 [← Back to docs index](../INDEX.md)
 
@@ -51,6 +51,16 @@ Source of truth: `src/configuration/*.yaml`, `src/infrastructure/database/databa
 | `FRONTEND_URL` | `http://localhost:3000` | CORS allowed origin | `src/main.ts` |
 | `NODE_ENV` | _(unset)_ | `production` disables TypeORM `synchronize` | `src/infrastructure/database/database.module.ts` |
 | `NODE_CONFIG_DIR` | `./config` (node-config default) | Where YAML config is loaded from — **set to `./src/configuration`** | node-config |
+
+## Frontend configuration
+
+The above is **backend** config. The React SPA in `frontend/` is configured separately at build time by Vite — only `VITE_`-prefixed variables in `frontend/.env` reach the client:
+
+| Var | Default | Purpose |
+|-----|---------|---------|
+| `VITE_API_URL` | `http://localhost:3000` | Base URL the SPA calls (read in `frontend/src/api/client.ts`) |
+
+These two settings must agree: the backend's `FRONTEND_URL` must list the SPA's origin (default `http://localhost:5173`) for CORS, and the SPA's `VITE_API_URL` must point at the API. See the [Frontend guide](../guides/frontend.md#environment-variables).
 
 ## Notes
 

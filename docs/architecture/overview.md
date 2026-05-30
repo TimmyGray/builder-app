@@ -3,7 +3,7 @@
 > **Summary:** How Builder App is structured — feature modules over a shared infrastructure layer — and how a request flows from HTTP to MySQL and back.
 > **Read this when:** You need the big picture before changing anything non-trivial.
 > **Audience:** both
-> **Related:** [Modules](modules.md) · [Data model](data-model.md) · [ADRs](decisions/)
+> **Related:** [Modules](modules.md) · [Data model](data-model.md) · [Frontend](frontend.md) · [ADRs](decisions/)
 
 [← Back to docs index](../INDEX.md)
 
@@ -15,7 +15,7 @@ Builder App is a **layered NestJS monolith**. Each business domain (`auth`, `use
 
 ## System context
 
-The API sits between an HTTP client (e.g. a frontend at `FRONTEND_URL`) and a MySQL database. There are no queues or third-party services.
+The API sits between an HTTP client and a MySQL database. There are no queues or third-party services. The HTTP client in this repo is the **React SPA** under `frontend/` (a separate Vite app, allowed via CORS at `FRONTEND_URL`); see [Frontend architecture](frontend.md).
 
 ```mermaid
 graph TD

@@ -1,14 +1,17 @@
 # Builder App
 
-> A NestJS REST API for a construction-site **task log**: users (builders & supervisors), job types, and the tasks that assign a job type to a user and track it to completion.
+> A full-stack construction-site **task log**: users (builders & supervisors), job types, and the tasks that assign a job type to a user and track it to completion. A NestJS REST API plus a React single-page app.
 
 ## What is this?
 
-Builder App is the backend for a construction log. It exposes a REST API to manage **users**, **job types** (e.g. "Bricklaying"), and **tasks** (a job type assigned to a user, tracked through a status lifecycle). It is built with [NestJS](https://nestjs.com/) 11 on top of TypeORM and MySQL, with request/response schemas documented through Swagger.
+Builder App is a construction log made of two parts in one repository:
 
-The codebase is organised as feature modules (`auth`, `users`, `tasks`, `job-type`) over a shared `infrastructure` module that owns configuration, the database connection, and global error handling.
+- **Backend** (repo root) — a [NestJS](https://nestjs.com/) 11 REST API over TypeORM and MySQL, with Swagger docs. It manages **users**, **job types** (e.g. "Bricklaying"), and **tasks** (a job type assigned to a user, tracked through a status lifecycle). Organised as feature modules (`auth`, `users`, `tasks`, `job-type`) over a shared `infrastructure` module for configuration, the database connection, and global error handling.
+- **Frontend** (`frontend/`) — a Vite + React 19 single-page app (MUI, Zustand, React Router, Axios) that consumes the API. See **[Frontend architecture](docs/architecture/frontend.md)**.
 
 ## Quick start
+
+**Backend** (API + database):
 
 ```bash
 # Install dependencies
@@ -25,14 +28,26 @@ npm run start:dev
 
 Requires **Node 20+** and a reachable **MySQL 8** instance. Once running, the API listens on `http://localhost:3000` and Swagger UI is at `http://localhost:3000/api`.
 
+**Frontend** (React SPA) — with the API running:
+
+```bash
+cd frontend
+npm install
+cp .env.example .env      # set VITE_API_URL if the API isn't on :3000
+npm run dev               # Vite dev server on http://localhost:5173
+```
+
+Set `FRONTEND_URL=http://localhost:5173` for the API so CORS allows the SPA. See the **[Frontend guide](docs/guides/frontend.md)**.
+
 ## Documentation
 
 | Doc | What's in it |
 |-----|--------------|
 | 📑 **[Docs Index](docs/INDEX.md)** | Map of all documentation |
 | 🤖 **[AGENTS.md](AGENTS.md)** | Conventions + context map for AI agents and contributors |
-| 🏛 **[Architecture](docs/architecture/overview.md)** | How the system is built and why |
-| 🚀 **[Getting Started](docs/guides/getting-started.md)** | Local setup |
+| 🏛 **[Architecture](docs/architecture/overview.md)** | How the backend is built and why |
+| 🎨 **[Frontend](docs/architecture/frontend.md)** | React SPA architecture + [dev guide](docs/guides/frontend.md) |
+| 🚀 **[Getting Started](docs/guides/getting-started.md)** | Local backend setup |
 | 🛠 **[Development](docs/guides/development.md)** | Day-to-day workflow |
 | 🔌 **[API Reference](docs/reference/api.md)** | Every endpoint |
 
@@ -49,10 +64,15 @@ src/
   infrastructure/    Config, database (TypeORM DataSource), exception filter
   configuration/     node-config YAML files (default/local/env-var mapping)
 test/                Jest + Supertest end-to-end suite
+frontend/            React SPA (Vite) — see frontend/src/{pages,stores,api}
 docs/                Documentation suite (start at docs/INDEX.md)
 ```
 
+The frontend is a separate npm project; see its layout in the **[Frontend guide](docs/guides/frontend.md#project-layout)**.
+
 ## Tech stack
+
+**Backend**
 
 - **Language:** TypeScript 5.7 (ES2023 target)
 - **Framework:** NestJS 11 (Express platform)
@@ -62,7 +82,15 @@ docs/                Documentation suite (start at docs/INDEX.md)
 - **Auth:** `bcrypt` password hashing + a `username` request header guard
 - **Testing:** Jest 30, Supertest (unit `*.spec.ts`, e2e `test/*.e2e-spec.ts`)
 
+**Frontend** (`frontend/`)
+
+- **Build/runtime:** Vite 8 + React 19, TypeScript
+- **UI:** MUI 9 (`@mui/material`, `@mui/x-data-grid`) with Emotion
+- **State / routing / HTTP:** Zustand 5 · React Router 7 · Axios 1
+
 ## Common commands
+
+**Backend** (repo root):
 
 | Command | Does |
 |---------|------|
@@ -72,7 +100,16 @@ docs/                Documentation suite (start at docs/INDEX.md)
 | `npm run test:e2e` | Run the end-to-end suite (needs MySQL) |
 | `npm run lint` | ESLint with `--fix` |
 
-See [Development](docs/guides/development.md) for the full list.
+**Frontend** (`cd frontend`):
+
+| Command | Does |
+|---------|------|
+| `npm run dev` | Vite dev server on `:5173` |
+| `npm run build` | Production build to `dist/` |
+| `npm run typecheck` | Type-check (`tsc --noEmit`) |
+| `npm run lint` | ESLint over `src` |
+
+See [Development](docs/guides/development.md) (backend) and the [Frontend guide](docs/guides/frontend.md) for the full lists.
 
 ## Contributing
 

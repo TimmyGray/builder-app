@@ -17,17 +17,19 @@ For task-based routing, see the **[Context Map in AGENTS.md](../AGENTS.md#contex
 
 | Doc | Summary | Read when |
 |-----|---------|-----------|
-| [Overview](architecture/overview.md) | Layered feature-module architecture, request flow, cross-cutting concerns | You need the big picture |
-| [Modules](architecture/modules.md) | Responsibilities & boundaries of auth/users/tasks/job-type/infrastructure | You're changing a specific area |
+| [Overview](architecture/overview.md) | Layered feature-module architecture, request flow, cross-cutting concerns | You need the big picture (backend) |
+| [Modules](architecture/modules.md) | Responsibilities & boundaries of auth/users/tasks/job-type/infrastructure | You're changing a specific backend area |
 | [Data model](architecture/data-model.md) | User, JobType, Task entities and their relationships | You're touching data/persistence |
+| [Frontend](architecture/frontend.md) | React SPA structure: stack, layers, routing, state, auth flow | You're changing the web client |
 | [Decisions (ADRs)](architecture/decisions/) | Recorded architecture decisions and their rationale | You want the "why" behind a choice |
 
 ## Guides
 
 | Doc | Summary | Read when |
 |-----|---------|-----------|
-| [Getting started](guides/getting-started.md) | Install, start MySQL, run the API locally | First-time setup |
-| [Development](guides/development.md) | Day-to-day workflow, commands, how to add a feature | While developing |
+| [Getting started](guides/getting-started.md) | Install, start MySQL, run the API locally | First-time setup (backend) |
+| [Development](guides/development.md) | Day-to-day backend workflow, commands, how to add a feature | While developing the API |
+| [Frontend](guides/frontend.md) | Install, run, and develop the React SPA; env, commands, recipes | While developing the web client |
 | [Testing](guides/testing.md) | Unit vs e2e tests, how they're structured, how to run | Adding or running tests |
 | [Deployment](guides/deployment.md) | Building for production, `synchronize`, env-var config | Releasing/deploying |
 
