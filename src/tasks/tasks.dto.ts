@@ -1,8 +1,9 @@
-import { IsNotEmpty, IsEnum, IsOptional, IsNumber, IsDateString } from 'class-validator';
+import { IsNotEmpty, IsEnum, IsOptional, IsNumber, IsDateString, IsString, IsPositive, MaxLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-// Import directly from the dto file (not the '../users' barrel) to avoid a circular
-// dependency: the barrel pulls in users.entity, which imports the tasks barrel back.
+// Import directly from the dto files (not the barrels) to avoid a circular
+// dependency: a barrel pulls in its entity, which imports the tasks barrel back.
 import { UserJobRole } from '../users/users.dto';
+import { Measure } from '../job-type/job-type.dto';
 
 export enum TaskStatus {
     TBD = 'ToBeDone',
@@ -21,6 +22,19 @@ export class CreateTaskDto {
     @IsNotEmpty()
     @IsNumber()
     jobTypeId!: number;
+
+    @ApiPropertyOptional({ description: 'Amount of work done, in the job type\'s measure (only when the job type has a measure)', example: 24 })
+    @IsOptional()
+    @IsNumber()
+    @IsPositive()
+    quantity?: number;
+
+    @ApiPropertyOptional({ description: 'Free-text description of the work done (only when the job type has no measure)', example: 'Cleared and swept the site' })
+    @IsOptional()
+    @IsString()
+    @IsNotEmpty()
+    @MaxLength(500)
+    scopeOfWork?: string;
 }
 
 export class UpdateTaskDto {
@@ -43,6 +57,19 @@ export class UpdateTaskDto {
     @IsOptional()
     @IsNumber()
     userId?: number;
+
+    @ApiPropertyOptional({ description: 'Amount of work done, in the job type\'s measure (only when the job type has a measure)', example: 24 })
+    @IsOptional()
+    @IsNumber()
+    @IsPositive()
+    quantity?: number;
+
+    @ApiPropertyOptional({ description: 'Free-text description of the work done (only when the job type has no measure)', example: 'Cleared and swept the site' })
+    @IsOptional()
+    @IsString()
+    @IsNotEmpty()
+    @MaxLength(500)
+    scopeOfWork?: string;
 }
 
 export class TaskUserDto {
@@ -65,6 +92,15 @@ export class TaskResponseDto {
 
     @ApiProperty({ description: 'The name of the job type', example: 'Bricklaying' })
     jobType!: string;
+
+    @ApiProperty({ description: "The job type's unit of measurement, if any", enum: Measure, example: Measure.CubicMeter, nullable: true })
+    measure!: Measure | null;
+
+    @ApiProperty({ description: "Amount of work done, in the job type's measure", example: 24, nullable: true })
+    quantity!: number | null;
+
+    @ApiProperty({ description: 'Free-text description of the work done (when the job type has no measure)', example: 'Cleared and swept the site', nullable: true })
+    scopeOfWork!: string | null;
 
     @ApiProperty({ description: 'The status of the task', enum: TaskStatus, example: TaskStatus.TBD })
     status!: TaskStatus;

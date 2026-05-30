@@ -16,8 +16,8 @@ export class JobTypeRepository {
         return await this.repository.findOne({ where: { name } });
     }
 
-    async update(id: number, name: string): Promise<JobType> {
-        return await this.repository.save({ id, name });
+    async update(id: number, fields: DeepPartial<JobType>): Promise<JobType> {
+        return await this.repository.save({ id, ...fields });
     }
 
     async deleteById(id: number): Promise<number> {

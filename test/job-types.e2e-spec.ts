@@ -132,6 +132,44 @@ describe('/job-types (e2e)', () => {
       .expect(400);
   });
 
+  it('POST /job-types persists description and measure', async () => {
+    const name = `e2e_jt_measured_${ts}`;
+    const res = await request(app.getHttpServer())
+      .post('/job-types')
+      .set('username', AUTH_USER.username)
+      .send({ name, description: 'Pouring concrete', measure: 'm^3' })
+      .expect(201);
+
+    expect(res.body.name).toBe(name);
+    expect(res.body.description).toBe('Pouring concrete');
+    expect(res.body.measure).toBe('m^3');
+
+    // self-contained cleanup
+    await request(app.getHttpServer())
+      .delete('/job-types')
+      .set('username', AUTH_USER.username)
+      .send({ id: res.body.id })
+      .expect(204);
+  });
+
+  it('GET /job-types/:id has null description and measure when unset', async () => {
+    const res = await request(app.getHttpServer())
+      .get(`/job-types/${mainJobTypeId}`)
+      .set('username', AUTH_USER.username)
+      .expect(200);
+
+    expect(res.body.description).toBeNull();
+    expect(res.body.measure).toBeNull();
+  });
+
+  it('POST /job-types returns 400 for an invalid measure', () => {
+    return request(app.getHttpServer())
+      .post('/job-types')
+      .set('username', AUTH_USER.username)
+      .send({ name: `e2e_jt_badmeasure_${ts}`, measure: 'tonnes' })
+      .expect(400);
+  });
+
   // ── PATCH /job-types ─────────────────────────────────────────────────────────
 
   it('PATCH /job-types updates the job type name', async () => {
@@ -144,6 +182,18 @@ describe('/job-types (e2e)', () => {
 
     expect(res.body.id).toBe(mainJobTypeId);
     expect(res.body.name).toBe(updatedName);
+  });
+
+  it('PATCH /job-types updates description and measure', async () => {
+    const res = await request(app.getHttpServer())
+      .patch('/job-types')
+      .set('username', AUTH_USER.username)
+      .send({ id: mainJobTypeId, name: `${MAIN_JOB_TYPE_NAME}_m`, description: 'Updated description', measure: 'kg' })
+      .expect(200);
+
+    expect(res.body.id).toBe(mainJobTypeId);
+    expect(res.body.description).toBe('Updated description');
+    expect(res.body.measure).toBe('kg');
   });
 
   it('PATCH /job-types returns 403 without auth header', () => {

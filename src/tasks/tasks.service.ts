@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { ITasksService } from './tasks.interface';
 import {
     CreateTaskDto,
@@ -11,6 +11,8 @@ import { TasksRepository } from './tasks.repository';
 import { Task } from './tasks.entity';
 import { UsersRepository, UserNotFoundException } from '../users';
 import { JobTypeRepository, JobTypeNotFoundException } from '../job-type';
+import { JobType } from '../job-type/job-type.entity';
+import { Measure } from '../job-type/job-type.dto';
 import {
     TaskNotFoundException,
     TaskCreationException,
@@ -27,15 +29,18 @@ export class TasksService implements ITasksService {
     ) { }
 
     async createTask(createTaskDto: CreateTaskDto): Promise<TaskResponseDto> {
-        const { userId, jobTypeId } = createTaskDto;
+        const { userId, jobTypeId, quantity, scopeOfWork } = createTaskDto;
 
         await this.ensureUserExists(userId);
-        await this.ensureJobTypeExists(jobTypeId);
+        const jobType = await this.getJobTypeOrThrow(jobTypeId);
+        this.validateScope(jobType.measure, quantity, scopeOfWork);
 
         try {
             const task = await this.tasksRepository.insert({
                 user: { id: userId },
                 jobType: { id: jobTypeId },
+                quantity: quantity ?? null,
+                scopeOfWork: scopeOfWork ?? null,
             });
             if (!task) {
                 throw new TaskCreationException(`Failed to create task for user with id ${userId}`);
@@ -47,7 +52,7 @@ export class TasksService implements ITasksService {
     }
 
     async updateTask(updateTaskDto: UpdateTaskDto): Promise<TaskResponseDto> {
-        const { id, status, dateOfCompletion, userId } = updateTaskDto;
+        const { id, status, dateOfCompletion, userId, quantity, scopeOfWork } = updateTaskDto;
 
         const existingTask = await this.tasksRepository.findOneById(id);
         if (!existingTask) {
@@ -58,11 +63,15 @@ export class TasksService implements ITasksService {
             await this.ensureUserExists(userId);
         }
 
+        this.validateScope(existingTask.jobType.measure, quantity, scopeOfWork);
+
         try {
             const updatedTask = await this.tasksRepository.update(id, {
                 user: userId !== undefined ? { id: userId } : undefined,
                 status: dateOfCompletion !== undefined ? TaskStatus.Completed : status,
                 dateOfCompletion: dateOfCompletion ? new Date(dateOfCompletion) : undefined,
+                quantity: quantity !== undefined ? quantity : undefined,
+                scopeOfWork: scopeOfWork !== undefined ? scopeOfWork : undefined,
             });
             if (!updatedTask) {
                 throw new TaskNotFoundException(`The task with id "${id}" was not found.`);
@@ -111,10 +120,30 @@ export class TasksService implements ITasksService {
         }
     }
 
-    private async ensureJobTypeExists(jobTypeId: number): Promise<void> {
+    private async getJobTypeOrThrow(jobTypeId: number): Promise<JobType> {
         const jobType = await this.jobTypeRepository.findOneById(jobTypeId);
         if (!jobType) {
             throw new JobTypeNotFoundException(`The job type with id "${jobTypeId}" was not found.`);
+        }
+        return jobType;
+    }
+
+    /**
+     * Enforces the scope-of-work rule against the job type's measure:
+     *   - a measured job type records a numeric `quantity`, not free text;
+     *   - an unmeasured job type records a free-text `scopeOfWork`, not a quantity.
+     * Only provided values are checked, so scope stays optional on create/update.
+     */
+    private validateScope(measure: Measure | null, quantity?: number, scopeOfWork?: string): void {
+        if (quantity !== undefined && scopeOfWork !== undefined) {
+            throw new BadRequestException('Provide either a quantity or a scope-of-work description, not both.');
+        }
+        if (measure) {
+            if (scopeOfWork !== undefined) {
+                throw new BadRequestException(`This job type is measured in "${measure}" — report a numeric quantity, not free text.`);
+            }
+        } else if (quantity !== undefined) {
+            throw new BadRequestException('This job type has no measure — describe the work in scopeOfWork instead.');
         }
     }
 
@@ -127,6 +156,9 @@ export class TasksService implements ITasksService {
                 jobRole: task.user.jobRole,
             },
             jobType: task.jobType.name,
+            measure: task.jobType.measure ?? null,
+            quantity: task.quantity ?? null,
+            scopeOfWork: task.scopeOfWork ?? null,
             status: task.status,
             dateOfCompletion: task.dateOfCompletion ?? null,
             createdAt: task.createdAt,

@@ -6,14 +6,23 @@ export const getTasks = async (): Promise<TaskResponse[]> => {
   return data;
 };
 
-export const createTask = async (userId: number, jobTypeId: number): Promise<TaskResponse> => {
-  const { data } = await apiClient.post('/tasks', { userId, jobTypeId });
+export interface TaskScopeInput {
+  quantity?: number;
+  scopeOfWork?: string;
+}
+
+export const createTask = async (
+  userId: number,
+  jobTypeId: number,
+  scope: TaskScopeInput = {},
+): Promise<TaskResponse> => {
+  const { data } = await apiClient.post('/tasks', { userId, jobTypeId, ...scope });
   return data;
 };
 
 export const updateTask = async (
   id: number,
-  patch: { status?: TaskStatus; dateOfCompletion?: string | null; userId?: number },
+  patch: { status?: TaskStatus; dateOfCompletion?: string | null; userId?: number } & TaskScopeInput,
 ): Promise<TaskResponse> => {
   const { data } = await apiClient.patch('/tasks', { id, ...patch });
   return data;

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Button,
@@ -18,11 +18,12 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useTasksStore } from '@/stores/tasksStore';
+import { useJobTypesStore } from '@/stores/jobTypesStore';
 import { useNotifyStore } from '@/stores/notifyStore';
 import { deleteTask } from '@/api/tasks';
 import { CreateTaskModal } from '@/components/modals/CreateTaskModal';
 import { EditTaskModal } from '@/components/modals/EditTaskModal';
-import type { TaskResponse, TaskStatus } from '@/types/api';
+import { MEASURE_LABELS, type TaskResponse, type TaskStatus } from '@/types/api';
 
 const STATUS_COLORS: Record<TaskStatus, { color: string; bg: string }> = {
   ToBeDone:   { color: '#a78bfa', bg: alpha('#7c3aed', 0.15) },
@@ -42,6 +43,8 @@ const fmtDateOnly = (d: string | null) =>
 
 export function TasksPage() {
   const { tasks, loading, fetchTasks, removeTask } = useTasksStore();
+  const jobTypes = useJobTypesStore((s) => s.jobTypes);
+  const fetchJobTypes = useJobTypesStore((s) => s.fetchJobTypes);
   const notify = useNotifyStore((s) => s.notify);
 
   const [createOpen, setCreateOpen] = useState(false);
@@ -50,6 +53,13 @@ export function TasksPage() {
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => { fetchTasks(); }, [fetchTasks]);
+  // Job types are loaded so the job-name cell can show each type's description on hover.
+  useEffect(() => { fetchJobTypes(); }, [fetchJobTypes]);
+
+  const descByName = useMemo(
+    () => new Map(jobTypes.map((jt) => [jt.name, jt.description])),
+    [jobTypes],
+  );
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -72,9 +82,37 @@ export function TasksPage() {
       headerName: 'Job Type',
       flex: 1.2,
       minWidth: 140,
-      renderCell: (params: GridRenderCellParams) => (
+      renderCell: (params: GridRenderCellParams<TaskResponse, string>) => {
+        const description = descByName.get(params.value ?? '') ?? '';
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+            {/* Native title keeps the tooltip pinned right at the value; a MUI Tooltip
+                mis-positions inside the DataGrid's virtualized rows. */}
+            <Typography
+              variant="body2"
+              noWrap
+              title={description || undefined}
+              sx={{ fontWeight: 600, cursor: description ? 'help' : 'default' }}
+            >
+              {params.value}
+            </Typography>
+          </Box>
+        );
+      },
+    },
+    {
+      field: 'scopeOfWork',
+      headerName: 'Scope of Work',
+      flex: 1,
+      minWidth: 130,
+      sortable: false,
+      valueGetter: (_: unknown, row: TaskResponse) =>
+        row.measure && row.quantity != null
+          ? `${row.quantity} ${MEASURE_LABELS[row.measure]}`
+          : (row.scopeOfWork ?? '—'),
+      renderCell: (params: GridRenderCellParams<TaskResponse, string>) => (
         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-          <Typography variant="body2" sx={{ fontWeight: 600 }}>{params.value}</Typography>
+          <Typography variant="body2" color="text.secondary" noWrap>{params.value}</Typography>
         </Box>
       ),
     },
@@ -167,7 +205,7 @@ export function TasksPage() {
 
   return (
     <Fade in timeout={400}>
-      <Box>
+      <Box sx={{ maxWidth: 1200, mx: 'auto', width: '100%' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
           <Box>
             <Typography variant="h5" sx={{ fontFamily: '"Syne", sans-serif', fontWeight: 700 }}>

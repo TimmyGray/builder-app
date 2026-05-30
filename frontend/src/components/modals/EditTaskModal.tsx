@@ -12,12 +12,13 @@ import {
   Box,
   CircularProgress,
   TextField,
+  InputAdornment,
 } from '@mui/material';
 import { useTasksStore } from '@/stores/tasksStore';
 import { useUsersStore } from '@/stores/usersStore';
 import { useNotifyStore } from '@/stores/notifyStore';
-import { updateTask } from '@/api/tasks';
-import type { TaskResponse, TaskStatus } from '@/types/api';
+import { updateTask, type TaskScopeInput } from '@/api/tasks';
+import { MEASURE_LABELS, type TaskResponse, type TaskStatus } from '@/types/api';
 
 const STATUS_OPTIONS: TaskStatus[] = ['ToBeDone', 'InProgress', 'Completed', 'Cancelled'];
 
@@ -35,6 +36,7 @@ export function EditTaskModal({ open, onClose, task }: Props) {
   const [status, setStatus] = useState<TaskStatus>('ToBeDone');
   const [userId, setUserId] = useState<number | ''>('');
   const [dateOfCompletion, setDateOfCompletion] = useState('');
+  const [scopeValue, setScopeValue] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -42,19 +44,37 @@ export function EditTaskModal({ open, onClose, task }: Props) {
       setStatus(task.status);
       setUserId(task.user.id);
       setDateOfCompletion(task.dateOfCompletion ? task.dateOfCompletion.slice(0, 10) : '');
+      setScopeValue(
+        task.measure
+          ? (task.quantity != null ? String(task.quantity) : '')
+          : (task.scopeOfWork ?? ''),
+      );
       if (users.length === 0) fetchUsers();
     }
   }, [open, task, users.length, fetchUsers]);
 
+  const measure = task?.measure ?? null;
+  const trimmedScope = scopeValue.trim();
+  const scopeInvalid = measure != null && trimmedScope !== '' && !(Number(trimmedScope) > 0);
+
   const handleSubmit = async () => {
-    if (!task) return;
+    if (!task || scopeInvalid) return;
     setSubmitting(true);
     try {
-      const patch: { status?: TaskStatus; dateOfCompletion?: string | null; userId?: number } = {};
+      const patch: { status?: TaskStatus; dateOfCompletion?: string | null; userId?: number } & TaskScopeInput = {};
       if (status !== task.status) patch.status = status;
       if (userId && userId !== task.user.id) patch.userId = userId as number;
       const docValue = dateOfCompletion || null;
       if (docValue !== task.dateOfCompletion) patch.dateOfCompletion = docValue;
+
+      if (trimmedScope !== '') {
+        if (measure) {
+          const q = Number(trimmedScope);
+          if (q !== task.quantity) patch.quantity = q;
+        } else if (trimmedScope !== (task.scopeOfWork ?? '')) {
+          patch.scopeOfWork = trimmedScope;
+        }
+      }
 
       const updated = await updateTask(task.id, patch);
       replaceTask(updated);
@@ -105,6 +125,33 @@ export function EditTaskModal({ open, onClose, task }: Props) {
             }}
             slotProps={{ inputLabel: { shrink: true } }}
           />
+
+          <TextField
+            fullWidth
+            size="small"
+            label="Scope of work"
+            type={measure ? 'number' : 'text'}
+            value={scopeValue}
+            onChange={(e) => setScopeValue(e.target.value)}
+            error={scopeInvalid}
+            helperText={
+              scopeInvalid
+                ? 'Enter a positive number'
+                : measure
+                  ? `Amount of work done (${MEASURE_LABELS[measure]})`
+                  : 'Describe the work done'
+            }
+            slotProps={
+              measure
+                ? {
+                    input: {
+                      endAdornment: <InputAdornment position="end">{MEASURE_LABELS[measure]}</InputAdornment>,
+                    },
+                    htmlInput: { min: 0, step: 'any' },
+                  }
+                : undefined
+            }
+          />
         </Box>
       </DialogContent>
 
@@ -113,7 +160,7 @@ export function EditTaskModal({ open, onClose, task }: Props) {
         <Button
           variant="contained"
           onClick={handleSubmit}
-          disabled={submitting}
+          disabled={submitting || scopeInvalid}
           startIcon={submitting ? <CircularProgress size={14} /> : null}
         >
           Save Changes

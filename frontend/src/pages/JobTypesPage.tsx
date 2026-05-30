@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   Box,
   Button,
+  Chip,
   IconButton,
   Typography,
   Dialog,
@@ -24,7 +25,7 @@ import { useNotifyStore } from '@/stores/notifyStore';
 import { deleteJobType } from '@/api/jobTypes';
 import { CreateJobTypeModal } from '@/components/modals/CreateJobTypeModal';
 import { EditJobTypeModal } from '@/components/modals/EditJobTypeModal';
-import type { JobTypeResponse } from '@/types/api';
+import { MEASURE_LABELS, type JobTypeResponse } from '@/types/api';
 
 export function JobTypesPage() {
   const { jobTypes, loading, fetchJobTypes, removeJobType } = useJobTypesStore();
@@ -54,7 +55,7 @@ export function JobTypesPage() {
 
   return (
     <Fade in timeout={400}>
-      <Box>
+      <Box sx={{ maxWidth: 1200, mx: 'auto', width: '100%' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
           <Box>
             <Typography variant="h5" sx={{ fontFamily: '"Syne", sans-serif', fontWeight: 700 }}>
@@ -125,16 +126,39 @@ export function JobTypesPage() {
                       <WorkIcon sx={{ fontSize: 18, color: '#a78bfa' }} />
                     </Box>
                     <Box sx={{ minWidth: 0 }}>
-                      <Typography
-                        variant="body2"
-                        noWrap
-                        title={jt.name}
-                        sx={{ fontWeight: 700 }}
-                      >
+                      <Typography variant="body2" noWrap sx={{ fontWeight: 700 }}>
                         {jt.name}
                       </Typography>
-                      <Typography variant="caption" color="text.disabled">
-                        ID #{jt.id}
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                        <Typography variant="caption" color="text.disabled">
+                          ID #{jt.id}
+                        </Typography>
+                        {jt.measure && (
+                          <Chip
+                            label={MEASURE_LABELS[jt.measure]}
+                            size="small"
+                            sx={{
+                              height: 18,
+                              fontSize: '0.65rem',
+                              fontWeight: 600,
+                              background: alpha('#06b6d4', 0.15),
+                              color: '#38d9f5',
+                            }}
+                          />
+                        )}
+                      </Box>
+                      <Typography
+                        variant="caption"
+                        color={jt.description ? 'text.secondary' : 'text.disabled'}
+                        sx={{
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          mt: 0.5,
+                        }}
+                      >
+                        {jt.description || 'No description'}
                       </Typography>
                     </Box>
                   </Box>

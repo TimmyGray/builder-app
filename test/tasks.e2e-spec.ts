@@ -13,6 +13,7 @@ describe('/tasks (e2e)', () => {
   let userId1: number;
   let userId2: number;
   let jobTypeId: number;
+  let measuredJobTypeId: number;
   let mainTaskId: number;
   let deleteTaskId: number;
 
@@ -31,6 +32,14 @@ describe('/tasks (e2e)', () => {
       .send({ name: JOB_TYPE_NAME })
       .expect(201);
     jobTypeId = jtRes.body.id;
+
+    // A second, measured job type (work quantified in m^3) for scope-of-work tests.
+    const measuredJtRes = await request(app.getHttpServer())
+      .post('/job-types')
+      .set('username', USER_1.username)
+      .send({ name: `${JOB_TYPE_NAME}_measured`, measure: 'm^3' })
+      .expect(201);
+    measuredJobTypeId = measuredJtRes.body.id;
 
     const taskRes = await request(app.getHttpServer())
       .post('/tasks')
@@ -60,6 +69,12 @@ describe('/tasks (e2e)', () => {
         .delete('/job-types')
         .set('username', USER_1.username)
         .send({ id: jobTypeId });
+    } catch {}
+    try {
+      await request(app.getHttpServer())
+        .delete('/job-types')
+        .set('username', USER_1.username)
+        .send({ id: measuredJobTypeId });
     } catch {}
     try {
       await request(app.getHttpServer())
@@ -160,6 +175,109 @@ describe('/tasks (e2e)', () => {
       .post('/tasks')
       .send({ userId: userId1, jobTypeId })
       .expect(403);
+  });
+
+  // ── POST /tasks scope-of-work ────────────────────────────────────────────────
+
+  it('GET /tasks/:id exposes null scope fields for an unmeasured task with no scope', async () => {
+    const res = await request(app.getHttpServer())
+      .get(`/tasks/${mainTaskId}`)
+      .set('username', USER_1.username)
+      .expect(200);
+
+    expect(res.body).toHaveProperty('measure', null);
+    expect(res.body).toHaveProperty('quantity', null);
+    expect(res.body).toHaveProperty('scopeOfWork', null);
+  });
+
+  it('POST /tasks records a quantity for a measured job type', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/tasks')
+      .set('username', USER_1.username)
+      .send({ userId: userId1, jobTypeId: measuredJobTypeId, quantity: 24 })
+      .expect(201);
+
+    expect(res.body.measure).toBe('m^3');
+    expect(res.body.quantity).toBe(24);
+    expect(res.body.scopeOfWork).toBeNull();
+
+    await request(app.getHttpServer())
+      .delete('/tasks')
+      .set('username', USER_1.username)
+      .send({ id: res.body.id })
+      .expect(204);
+  });
+
+  it('POST /tasks rejects free text for a measured job type', () => {
+    return request(app.getHttpServer())
+      .post('/tasks')
+      .set('username', USER_1.username)
+      .send({ userId: userId1, jobTypeId: measuredJobTypeId, scopeOfWork: 'too much work' })
+      .expect(400);
+  });
+
+  it('POST /tasks records free text for an unmeasured job type', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/tasks')
+      .set('username', USER_1.username)
+      .send({ userId: userId1, jobTypeId, scopeOfWork: 'Swept the whole site' })
+      .expect(201);
+
+    expect(res.body.measure).toBeNull();
+    expect(res.body.scopeOfWork).toBe('Swept the whole site');
+    expect(res.body.quantity).toBeNull();
+
+    await request(app.getHttpServer())
+      .delete('/tasks')
+      .set('username', USER_1.username)
+      .send({ id: res.body.id })
+      .expect(204);
+  });
+
+  it('POST /tasks rejects a quantity for an unmeasured job type', () => {
+    return request(app.getHttpServer())
+      .post('/tasks')
+      .set('username', USER_1.username)
+      .send({ userId: userId1, jobTypeId, quantity: 5 })
+      .expect(400);
+  });
+
+  it('POST /tasks rejects providing both a quantity and free text', () => {
+    return request(app.getHttpServer())
+      .post('/tasks')
+      .set('username', USER_1.username)
+      .send({ userId: userId1, jobTypeId: measuredJobTypeId, quantity: 5, scopeOfWork: 'x' })
+      .expect(400);
+  });
+
+  it('POST /tasks rejects a non-positive quantity', () => {
+    return request(app.getHttpServer())
+      .post('/tasks')
+      .set('username', USER_1.username)
+      .send({ userId: userId1, jobTypeId: measuredJobTypeId, quantity: 0 })
+      .expect(400);
+  });
+
+  it('PATCH /tasks updates the quantity of a measured task', async () => {
+    const created = await request(app.getHttpServer())
+      .post('/tasks')
+      .set('username', USER_1.username)
+      .send({ userId: userId1, jobTypeId: measuredJobTypeId, quantity: 10 })
+      .expect(201);
+
+    const res = await request(app.getHttpServer())
+      .patch('/tasks')
+      .set('username', USER_1.username)
+      .send({ id: created.body.id, quantity: 30 })
+      .expect(200);
+
+    expect(res.body.quantity).toBe(30);
+
+    await request(app.getHttpServer())
+      .delete('/tasks')
+      .set('username', USER_1.username)
+      .send({ id: created.body.id })
+      .expect(204);
   });
 
   // ── PATCH /tasks ─────────────────────────────────────────────────────────────

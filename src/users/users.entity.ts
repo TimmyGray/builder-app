@@ -10,7 +10,7 @@ import {
 import { UserJobRole } from './users.dto';
 import { Task } from '../tasks/tasks.entity';
 
-@Entity()
+@Entity('users')
 export class User {
     @PrimaryGeneratedColumn()
     id!: number;

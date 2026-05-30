@@ -1,4 +1,4 @@
-import { ExecutionContext } from '@nestjs/common';
+import { ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { UsersRepository } from '../users/users.repository';
 import { AuthGuard } from './auth.guard';
 
@@ -28,18 +28,18 @@ describe('AuthGuard', () => {
     expect(guard).toBeDefined();
   });
 
-  it('should return false when username header is missing', async () => {
+  it('throws ForbiddenException when username header is missing', async () => {
     const context = createExecutionContext({});
 
-    await expect(guard.canActivate(context)).resolves.toBe(false);
+    await expect(guard.canActivate(context)).rejects.toThrow(ForbiddenException);
     expect(usersRepository.findOneByUsername).not.toHaveBeenCalled();
   });
 
-  it('should return false when username does not exist in db', async () => {
+  it('throws ForbiddenException when username does not exist in db', async () => {
     usersRepository.findOneByUsername.mockResolvedValue(null);
     const context = createExecutionContext({ username: 'ghost-user' });
 
-    await expect(guard.canActivate(context)).resolves.toBe(false);
+    await expect(guard.canActivate(context)).rejects.toThrow(ForbiddenException);
     expect(usersRepository.findOneByUsername).toHaveBeenCalledWith('ghost-user');
   });
 

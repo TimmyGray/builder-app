@@ -42,69 +42,72 @@ export function Header() {
   return (
     <>
       <AppBar position="fixed" elevation={0}>
-        <Toolbar sx={{ gap: 2, px: { xs: 2, md: 4 } }}>
-          {/* Logo */}
-          <Typography
-            variant="h6"
-            sx={{
-              fontFamily: '"Syne", sans-serif',
-              fontWeight: 800,
-              letterSpacing: '-0.02em',
-              background: `linear-gradient(135deg, #fff 0%, ${theme.palette.primary.light} 100%)`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              textShadow: 'none',
-              filter: `drop-shadow(0 0 12px ${alpha(theme.palette.primary.main, 0.5)})`,
-              mr: 2,
-              cursor: 'pointer',
-              flexShrink: 0,
-            }}
-            onClick={() => navigate('/tasks')}
-          >
-            Builder
-          </Typography>
-
-          {/* Desktop nav */}
-          {!isMobile && (
-            <Tabs
-              value={currentTab === -1 ? false : currentTab}
-              onChange={(_, v) => navigate(NAV_ITEMS[v].path)}
-              sx={{ flex: 1 }}
-              slotProps={{
-                indicator: {
-                  style: {
-                    background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                    height: 3,
-                    borderRadius: 2,
-                  },
-                },
+        <Toolbar disableGutters sx={{ px: { xs: 2, md: 4 } }}>
+          {/* Inner wrapper centers the header content to match the centered page content. */}
+          <Box sx={{ width: '100%', maxWidth: 1200, mx: 'auto', display: 'flex', alignItems: 'center', gap: 2 }}>
+            {/* Logo */}
+            <Typography
+              variant="h6"
+              sx={{
+                fontFamily: '"Syne", sans-serif',
+                fontWeight: 800,
+                letterSpacing: '-0.02em',
+                background: `linear-gradient(135deg, #fff 0%, ${theme.palette.primary.light} 100%)`,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                textShadow: 'none',
+                filter: `drop-shadow(0 0 12px ${alpha(theme.palette.primary.main, 0.5)})`,
+                mr: 2,
+                cursor: 'pointer',
+                flexShrink: 0,
               }}
+              onClick={() => navigate('/tasks')}
             >
-              {NAV_ITEMS.map((item) => (
-                <Tab key={item.path} label={item.label} />
-              ))}
-            </Tabs>
-          )}
+              Builder
+            </Typography>
 
-          {isMobile && <Box sx={{ flex: 1 }} />}
+            {/* Desktop nav */}
+            {!isMobile && (
+              <Tabs
+                value={currentTab === -1 ? false : currentTab}
+                onChange={(_, v) => navigate(NAV_ITEMS[v].path)}
+                sx={{ flex: 1 }}
+                slotProps={{
+                  indicator: {
+                    style: {
+                      background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                      height: 3,
+                      borderRadius: 2,
+                    },
+                  },
+                }}
+              >
+                {NAV_ITEMS.map((item) => (
+                  <Tab key={item.path} label={item.label} />
+                ))}
+              </Tabs>
+            )}
 
-          {/* User button */}
-          <Button
-            startIcon={<AccountCircleIcon />}
-            onClick={() => setProfileOpen(true)}
-            variant="outlined"
-            size="small"
-            sx={{ flexShrink: 0 }}
-          >
-            {user?.username ?? 'Account'}
-          </Button>
+            {isMobile && <Box sx={{ flex: 1 }} />}
 
-          {/* Mobile menu */}
-          {isMobile && (
-            <IconButton onClick={() => setDrawerOpen(true)} color="inherit">
-              <MenuIcon />
-            </IconButton>
-          )}
+            {/* User button */}
+            <Button
+              startIcon={<AccountCircleIcon />}
+              onClick={() => setProfileOpen(true)}
+              variant="outlined"
+              size="small"
+              sx={{ flexShrink: 0 }}
+            >
+              {user?.username ?? 'Account'}
+            </Button>
+
+            {/* Mobile menu */}
+            {isMobile && (
+              <IconButton onClick={() => setDrawerOpen(true)} color="inherit">
+                <MenuIcon />
+              </IconButton>
+            )}
+          </Box>
         </Toolbar>
       </AppBar>
 

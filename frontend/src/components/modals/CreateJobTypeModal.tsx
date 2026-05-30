@@ -6,11 +6,17 @@ import {
   DialogActions,
   Button,
   TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Box,
   CircularProgress,
 } from '@mui/material';
 import { useJobTypesStore } from '@/stores/jobTypesStore';
 import { useNotifyStore } from '@/stores/notifyStore';
 import { createJobType } from '@/api/jobTypes';
+import { MEASURE_OPTIONS, MEASURE_LABELS, type Measure } from '@/types/api';
 
 interface Props {
   open: boolean;
@@ -21,16 +27,23 @@ export function CreateJobTypeModal({ open, onClose }: Props) {
   const addJobType = useJobTypesStore((s) => s.addJobType);
   const notify = useNotifyStore((s) => s.notify);
   const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [measure, setMeasure] = useState<Measure | ''>('');
   const [submitting, setSubmitting] = useState(false);
+
+  const reset = () => { setName(''); setDescription(''); setMeasure(''); };
 
   const handleSubmit = async () => {
     if (!name.trim()) return;
     setSubmitting(true);
     try {
-      const jt = await createJobType(name.trim());
+      const jt = await createJobType(name.trim(), {
+        description: description.trim() || undefined,
+        measure: measure || undefined,
+      });
       addJobType(jt);
       notify('Job type created', 'success');
-      setName('');
+      reset();
       onClose();
     } catch (e: unknown) {
       notify((e as { message: string }).message ?? 'Failed to create job type', 'error');
@@ -42,7 +55,7 @@ export function CreateJobTypeModal({ open, onClose }: Props) {
   return (
     <Dialog
       open={open}
-      onClose={() => { onClose(); setName(''); }}
+      onClose={() => { onClose(); reset(); }}
       maxWidth="xs"
       fullWidth
     >
@@ -51,16 +64,38 @@ export function CreateJobTypeModal({ open, onClose }: Props) {
       </DialogTitle>
 
       <DialogContent>
-        <TextField
-          autoFocus
-          fullWidth
-          size="small"
-          label="Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-          sx={{ mt: 1 }}
-        />
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1 }}>
+          <TextField
+            autoFocus
+            fullWidth
+            size="small"
+            label="Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <TextField
+            fullWidth
+            size="small"
+            label="Description"
+            multiline
+            minRows={2}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+          <FormControl fullWidth size="small">
+            <InputLabel>Measure</InputLabel>
+            <Select
+              value={measure}
+              onChange={(e) => setMeasure(e.target.value as Measure | '')}
+              label="Measure"
+            >
+              <MenuItem value=""><em>None</em></MenuItem>
+              {MEASURE_OPTIONS.map((m) => (
+                <MenuItem key={m} value={m}>{MEASURE_LABELS[m]}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 3 }}>

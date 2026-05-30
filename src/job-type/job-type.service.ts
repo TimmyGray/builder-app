@@ -22,7 +22,7 @@ export class JobTypeService implements IJobTypeService {
     constructor(private readonly jobTypeRepository: JobTypeRepository) { }
 
     async createJobType(createJobTypeDto: CreateJobTypeDto): Promise<JobTypeResponseDto> {
-        const { name } = createJobTypeDto;
+        const { name, description, measure } = createJobTypeDto;
 
         const existing = await this.jobTypeRepository.findOneByName(name);
         if (existing) {
@@ -30,7 +30,11 @@ export class JobTypeService implements IJobTypeService {
         }
 
         try {
-            const jobType = await this.jobTypeRepository.insert({ name });
+            const jobType = await this.jobTypeRepository.insert({
+                name,
+                description: description ?? null,
+                measure: measure ?? null,
+            });
             return this.toResponse(jobType);
         } catch (error) {
             throw new JobTypeCreationException(`Failed to create job type with name "${name}"`);
@@ -38,7 +42,7 @@ export class JobTypeService implements IJobTypeService {
     }
 
     async updateJobType(updateJobTypeDto: UpdateJobTypeDto): Promise<JobTypeResponseDto> {
-        const { id, name } = updateJobTypeDto;
+        const { id, name, description, measure } = updateJobTypeDto;
 
         const existingJobType = await this.jobTypeRepository.findOneById(id);
         if (!existingJobType) {
@@ -51,7 +55,11 @@ export class JobTypeService implements IJobTypeService {
         }
 
         try {
-            const updatedJobType = await this.jobTypeRepository.update(id, name);
+            const updatedJobType = await this.jobTypeRepository.update(id, {
+                name,
+                description: description ?? null,
+                measure: measure ?? null,
+            });
             return this.toResponse(updatedJobType);
         } catch (error) {
             throw new JobTypeUpdateException(`Failed to update job type with id ${id}`);
@@ -94,6 +102,8 @@ export class JobTypeService implements IJobTypeService {
         return {
             id: jobType.id,
             name: jobType.name,
+            description: jobType.description ?? null,
+            measure: jobType.measure ?? null,
         };
     }
 }
