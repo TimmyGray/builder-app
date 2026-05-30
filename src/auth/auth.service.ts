@@ -22,8 +22,8 @@ export class AuthService implements IAuthService {
         private readonly authConfig: AuthConfig
     ) { }
 
-    private encryptPassword(password: string): string {
-        return bcrypt.hashSync(password, this.authConfig.salt);
+    private async encryptPassword(password: string): Promise<string> {
+        return bcrypt.hash(password, this.authConfig.rounds);
     }
 
     private validatePassword(password: string, hashedPassword: string): boolean {
@@ -56,7 +56,7 @@ export class AuthService implements IAuthService {
         if (user) {
             throw new UserAlreadyExistsException(`User with username ${username} already exists. Try a different username.`);
         }
-        const hashedPassword = this.encryptPassword(password);
+        const hashedPassword = await this.encryptPassword(password);
         try {
             const newUser = await this.usersRepository.insert({
                 username,

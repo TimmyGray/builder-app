@@ -6,4 +6,6 @@ mysql:
   database: MYSQL_DATABASE
 
 auth:
-  salt: AUTH_SALT
+  rounds:
+    __name: AUTH_ROUNDS
+    __format: json

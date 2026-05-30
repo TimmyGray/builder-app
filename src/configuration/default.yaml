@@ -4,4 +4,4 @@ mysql:
   database: builder_app
 
 auth:
-  salt:
+  rounds:

@@ -1,4 +1,5 @@
 
 export abstract class AuthConfig {
-    abstract salt: string;
+    /** bcrypt cost factor; a fresh random salt is generated per password. */
+    abstract rounds: number;
 }

@@ -13,7 +13,7 @@ describe('AuthService', () => {
     deleteByUsername: jest.fn(),
   };
 
-  const authConfigMock: AuthConfig = { salt: '$2b$10$abcdefghijklmnopqrstuv' };
+  const authConfigMock: AuthConfig = { rounds: 10 };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
