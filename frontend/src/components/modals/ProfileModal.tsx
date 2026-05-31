@@ -16,6 +16,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import DeleteIcon from '@mui/icons-material/DeleteForever';
 import SaveIcon from '@mui/icons-material/Save';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/authStore';
 import { useNotifyStore } from '@/stores/notifyStore';
 import { useTasksStore } from '@/stores/tasksStore';
@@ -28,6 +29,7 @@ interface Props {
 }
 
 export function ProfileModal({ open, onClose }: Props) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const { setUser, clearUser } = useAuthStore();
@@ -47,10 +49,10 @@ export function ProfileModal({ open, onClose }: Props) {
       const updated = await updateUser(user.id, username.trim());
       setUser(updated);
       fetchTasks(); // refresh so the Worker column shows the new username
-      notify('Username updated successfully', 'success');
+      notify(t('profile.usernameUpdated'), 'success');
       onClose();
     } catch (e: unknown) {
-      notify((e as { message: string }).message ?? 'Failed to update username', 'error');
+      notify((e as { message: string }).message ?? t('profile.updateFailed'), 'error');
     } finally {
       setSavingName(false);
     }
@@ -76,9 +78,9 @@ export function ProfileModal({ open, onClose }: Props) {
       await deleteUser(user.username, deletePassword);
       clearUser();
       navigate('/auth');
-      notify('Account deleted', 'info');
+      notify(t('profile.accountDeleted'), 'info');
     } catch (e: unknown) {
-      notify((e as { message: string }).message ?? 'Failed to delete account', 'error');
+      notify((e as { message: string }).message ?? t('profile.deleteFailed'), 'error');
     } finally {
       setDeleting(false);
     }
@@ -87,14 +89,14 @@ export function ProfileModal({ open, onClose }: Props) {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
       <DialogTitle sx={{ fontFamily: '"Syne", sans-serif', fontWeight: 700, pb: 1 }}>
-        Account Settings
+        {t('profile.title')}
       </DialogTitle>
 
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
         {/* Update username */}
         <Box>
           <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: '0.1em' }}>
-            Update Username
+            {t('profile.updateUsername')}
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
             <TextField
@@ -102,7 +104,7 @@ export function ProfileModal({ open, onClose }: Props) {
               size="small"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="New username"
+              placeholder={t('profile.usernamePlaceholder')}
             />
             <Button
               variant="contained"
@@ -112,7 +114,7 @@ export function ProfileModal({ open, onClose }: Props) {
               startIcon={savingName ? <CircularProgress size={14} /> : <SaveIcon />}
               sx={{ flexShrink: 0 }}
             >
-              Save
+              {t('common.save')}
             </Button>
           </Box>
         </Box>
@@ -122,7 +124,7 @@ export function ProfileModal({ open, onClose }: Props) {
         {/* Sign out */}
         <Box>
           <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: '0.1em' }}>
-            Session
+            {t('profile.session')}
           </Typography>
           <Box sx={{ mt: 1 }}>
             <Button
@@ -133,7 +135,7 @@ export function ProfileModal({ open, onClose }: Props) {
               disabled={signingOut}
               fullWidth
             >
-              Sign Out
+              {t('profile.signOut')}
             </Button>
           </Box>
         </Box>
@@ -143,7 +145,7 @@ export function ProfileModal({ open, onClose }: Props) {
         {/* Delete account */}
         <Box>
           <Typography variant="overline" sx={{ color: 'error.main', letterSpacing: '0.1em' }}>
-            Danger Zone
+            {t('profile.dangerZone')}
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
             <TextField
@@ -152,7 +154,7 @@ export function ProfileModal({ open, onClose }: Props) {
               type="password"
               value={deletePassword}
               onChange={(e) => setDeletePassword(e.target.value)}
-              placeholder="Confirm password"
+              placeholder={t('profile.passwordPlaceholder')}
             />
             <Button
               variant="outlined"
@@ -163,7 +165,7 @@ export function ProfileModal({ open, onClose }: Props) {
               startIcon={deleting ? <CircularProgress size={14} /> : <DeleteIcon />}
               sx={{ flexShrink: 0 }}
             >
-              Delete
+              {t('common.delete')}
             </Button>
           </Box>
         </Box>
@@ -171,7 +173,7 @@ export function ProfileModal({ open, onClose }: Props) {
 
       <DialogActions sx={{ px: 3, pb: 3 }}>
         <Button onClick={onClose} variant="text" color="inherit">
-          Close
+          {t('common.close')}
         </Button>
       </DialogActions>
     </Dialog>

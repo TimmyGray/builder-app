@@ -14,6 +14,7 @@ import {
     JobTypeUpdateException,
     JobTypeDeletionException,
     JobTypeAlreadyExistsException,
+    JobTypeHasRelatedTasksException,
     InternalJobTypeServiceException
 } from './job-type.errors';
 
@@ -69,9 +70,15 @@ export class JobTypeService implements IJobTypeService {
     async deleteJobType(deleteJobTypeDto: DeleteJobTypeDto): Promise<void> {
         const { id } = deleteJobTypeDto;
 
-        const existingJobType = await this.jobTypeRepository.findOneById(id);
+        const existingJobType = await this.jobTypeRepository.findOneByIdWithTasks(id);
         if (!existingJobType) {
             throw new JobTypeNotFoundException(`The job type with id "${id}" was not found.`);
+        }
+
+        if (existingJobType.tasks && existingJobType.tasks.length > 0) {
+            throw new JobTypeHasRelatedTasksException(
+                `Cannot delete job type "${existingJobType.name}" because it has ${existingJobType.tasks.length} associated task(s). Please delete those tasks first.`
+            );
         }
 
         try {

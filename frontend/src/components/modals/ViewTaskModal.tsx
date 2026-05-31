@@ -10,6 +10,7 @@ import {
   Divider,
   alpha,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { MEASURE_LABELS, type TaskResponse, type TaskStatus, type UserJobRole } from '@/types/api';
 
 const STATUS_COLORS: Record<TaskStatus, { color: string; bg: string }> = {
@@ -19,12 +20,14 @@ const STATUS_COLORS: Record<TaskStatus, { color: string; bg: string }> = {
   Cancelled:  { color: '#f87171', bg: alpha('#ef4444', 0.15) },
 };
 
-const fmtTimestamp = (d: string | null) =>
-  d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+const DATE_LOCALE: Record<string, string> = { en: 'en-GB', ru: 'ru-RU' };
 
-const fmtDateOnly = (d: string | null) =>
+const fmtTimestamp = (d: string | null, locale: string) =>
+  d ? new Date(d).toLocaleDateString(DATE_LOCALE[locale] ?? 'en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+
+const fmtDateOnly = (d: string | null, locale: string) =>
   d
-    ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' })
+    ? new Date(d).toLocaleDateString(DATE_LOCALE[locale] ?? 'en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' })
     : '—';
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -43,9 +46,10 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function RoleChip({ role }: { role: UserJobRole }) {
+  const { t } = useTranslation();
   return (
     <Chip
-      label={role}
+      label={t(`role.${role}`)}
       size="small"
       sx={{
         background: role === 'Supervisor' ? alpha('#06b6d4', 0.15) : alpha('#7c3aed', 0.15),
@@ -64,6 +68,8 @@ interface Props {
 }
 
 export function ViewTaskModal({ open, onClose, task }: Props) {
+  const { t, i18n } = useTranslation();
+
   if (!task) return null;
 
   const s = STATUS_COLORS[task.status] ?? STATUS_COLORS.ToBeDone;
@@ -75,12 +81,12 @@ export function ViewTaskModal({ open, onClose, task }: Props) {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ fontFamily: '"Syne", sans-serif', fontWeight: 700 }}>
-        Task Details
+        {t('viewTask.title')}
       </DialogTitle>
 
       <DialogContent>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1 }}>
-          <Field label="Job Type">
+          <Field label={t('tasks.col.jobType')}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
               <Typography variant="body1" sx={{ fontWeight: 600 }}>
                 {task.jobType}
@@ -104,17 +110,17 @@ export function ViewTaskModal({ open, onClose, task }: Props) {
           <Divider sx={{ borderColor: alpha('#7c3aed', 0.15) }} />
 
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2.5 }}>
-            <Field label="Worker">
+            <Field label={t('viewTask.worker')}>
               <Typography variant="body2" sx={{ fontWeight: 500 }}>
                 {task.user.username}
               </Typography>
             </Field>
-            <Field label="Role">
+            <Field label={t('viewTask.role')}>
               <RoleChip role={task.user.jobRole} />
             </Field>
-            <Field label="Status">
+            <Field label={t('common.status')}>
               <Chip
-                label={task.status}
+                label={t(`status.${task.status}`)}
                 size="small"
                 sx={{
                   background: s.bg,
@@ -125,7 +131,7 @@ export function ViewTaskModal({ open, onClose, task }: Props) {
                 }}
               />
             </Field>
-            <Field label="Scope of Work">
+            <Field label={t('common.scopeOfWork')}>
               <Typography
                 variant="body2"
                 color={scopeDisplay === '—' ? 'text.disabled' : 'text.primary'}
@@ -138,14 +144,14 @@ export function ViewTaskModal({ open, onClose, task }: Props) {
           <Divider sx={{ borderColor: alpha('#7c3aed', 0.15) }} />
 
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2.5 }}>
-            <Field label="Created">
+            <Field label={t('tasks.col.created')}>
               <Typography variant="body2" color="text.secondary">
-                {fmtTimestamp(task.createdAt)}
+                {fmtTimestamp(task.createdAt, i18n.language)}
               </Typography>
             </Field>
-            <Field label="Completed On">
+            <Field label={t('tasks.col.completedOn')}>
               <Typography variant="body2" color="text.secondary">
-                {fmtDateOnly(task.dateOfCompletion)}
+                {fmtDateOnly(task.dateOfCompletion, i18n.language)}
               </Typography>
             </Field>
           </Box>
@@ -154,7 +160,7 @@ export function ViewTaskModal({ open, onClose, task }: Props) {
 
       <DialogActions sx={{ px: 3, pb: 3 }}>
         <Button onClick={onClose} color="inherit">
-          Close
+          {t('common.close')}
         </Button>
       </DialogActions>
     </Dialog>

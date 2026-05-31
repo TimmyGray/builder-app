@@ -27,6 +27,7 @@ Load the **"Read first"** file only. Open "Then maybe" sources if that's not eno
 | The frontend (React SPA) — structure         | `docs/architecture/frontend.md`                     | `frontend/src/`                             |
 | Running / developing the frontend            | `docs/guides/frontend.md`                            | `frontend/package.json`                     |
 | A frontend page / store / API call           | `docs/architecture/frontend.md`                     | `frontend/src/{pages,stores,api}/`          |
+| Adding or editing a UI string / translation  | `docs/architecture/frontend.md#localisation-i18n`   | `frontend/src/i18n/`                        |
 | Writing/running tests                        | `docs/guides/testing.md`                             | `test/`                                     |
 | Deploying / production behaviour             | `docs/guides/deployment.md`                          | `docs/reference/configuration.md`           |
 
@@ -38,7 +39,7 @@ Each "Read first" is **one** file. Don't load the whole `docs/` tree.
 
 - **What it is:** A construction task log (users, job types, tasks) — a **NestJS REST API** (repo root) plus a **React SPA** (`frontend/`).
 - **Backend stack:** TypeScript / NestJS 11 / TypeORM / MySQL 8 / `node-config` / Swagger. Entry: `src/main.ts` → `src/app.module.ts`.
-- **Frontend stack:** Vite / React 19 / TypeScript / MUI / Zustand / React Router / Axios. Entry: `frontend/src/main.tsx` → `App.tsx`. See [Frontend architecture](docs/architecture/frontend.md).
+- **Frontend stack:** Vite / React 19 / TypeScript / MUI / Zustand / React Router / Axios / i18next (EN + RU). Entry: `frontend/src/main.tsx` → `App.tsx`. See [Frontend architecture](docs/architecture/frontend.md).
 - **How it runs:** `docker compose up --build` starts everything (MySQL + API + frontend + phpMyAdmin). For local dev: `npm run start:dev` boots Nest on `:3000` (Swagger on `/api`); `cd frontend && npm run dev` serves the SPA on `:5173`. See [Getting Started](docs/guides/getting-started.md).
 - **Two npm projects:** the root (`package.json`) and `frontend/` each have their own deps and scripts; install/run in the right directory.
 
@@ -70,6 +71,7 @@ The React SPA is a **separate npm project**. Full detail in [Frontend architectu
 - **Auth is header-based** (no token) and the persisted store key is **`auth`** — the request interceptor reads `localStorage["auth"]` to set the `username` header. Matches [ADR-0003](docs/architecture/decisions/0003-header-based-authentication.md).
 - **Keep `frontend/src/types/api.ts` in sync** with backend DTOs (no codegen).
 - **Use the `@` import alias** for `src`, and style with MUI + `theme.ts` (no ad-hoc CSS).
+- **All UI strings go through i18next.** Use `const { t } = useTranslation()` and `t('key')`. Add new keys to both `src/i18n/en.ts` and `src/i18n/ru.ts`. The brand name "Builder App" is the sole exception.
 
 ## Commands
 
@@ -114,6 +116,7 @@ Frontend (in `frontend/`):
 | Frontend state (Zustand) | `frontend/src/stores/` |
 | Frontend shared types | `frontend/src/types/api.ts` |
 | Frontend theme | `frontend/src/theme.ts` |
+| Frontend translations (EN / RU) | `frontend/src/i18n/en.ts`, `frontend/src/i18n/ru.ts` |
 
 ---
 

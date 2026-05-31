@@ -75,6 +75,10 @@ frontend/
       AuthPage.tsx TasksPage.tsx JobTypesPage.tsx
     types/
       api.ts              Hand-written mirrors of backend DTOs
+    i18n/
+      index.ts            i18next init; reads locale from localStorage["lang"]
+      en.ts               English translations
+      ru.ts               Russian translations
 ```
 
 See [Frontend architecture](../architecture/frontend.md) for how these layers fit together.
@@ -88,6 +92,7 @@ See [Frontend architecture](../architecture/frontend.md) for how these layers fi
 - **Keep types in sync with the backend.** When a backend DTO changes, update the matching interface in `src/types/api.ts` — there is no codegen.
 - **Style with MUI + the theme.** Use MUI components and the `sx` prop / `theme.ts`; avoid ad-hoc CSS files.
 - **Guarded screens go under `ProtectedLayout`.** Add new authenticated routes inside that branch in `App.tsx`; public routes go alongside `/auth`.
+- **All UI strings go through i18next.** Call `const { t } = useTranslation()` at the top of the component and use `t('key')`. Never hard-code user-facing English or Russian strings in JSX. The brand name "Builder App" is the sole exception.
 
 ## Recipe: call a new endpoint
 
@@ -101,6 +106,15 @@ See [Frontend architecture](../architecture/frontend.md) for how these layers fi
 2. Register a `<Route>` in `src/App.tsx` — inside the `ProtectedLayout` branch if it needs auth.
 3. Add a nav entry to `NAV_ITEMS` in `src/components/Header.tsx` if it should appear in the top nav.
 4. Fetch data in a `useEffect` via the store's `fetch*`; render with MUI.
+
+## Recipe: add a translated string
+
+1. Add the key and English value to `src/i18n/en.ts`.
+2. Add the same key and Russian value to `src/i18n/ru.ts`.
+3. Use `t('your.key')` (or `t('your.key', { count })` for plurals) inside the component.
+4. For Russian plurals declare `_one`, `_few`, and `_many` variants; for English only `_one` and `_other` are needed.
+
+Keys are dot-namespaced by area (`common.*`, `tasks.*`, `status.*`, `role.*`, etc.). Keep `en.ts` and `ru.ts` in sync — there is no build-time check for missing keys.
 
 ## Before you commit
 

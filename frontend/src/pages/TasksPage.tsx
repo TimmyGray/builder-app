@@ -17,6 +17,7 @@ import { DataGrid, type GridColDef, type GridRenderCellParams } from '@mui/x-dat
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { useTranslation } from 'react-i18next';
 import { useTasksStore } from '@/stores/tasksStore';
 import { useJobTypesStore } from '@/stores/jobTypesStore';
 import { useNotifyStore } from '@/stores/notifyStore';
@@ -33,16 +34,19 @@ const STATUS_COLORS: Record<TaskStatus, { color: string; bg: string }> = {
   Cancelled:  { color: '#f87171', bg: alpha('#ef4444', 0.15) },
 };
 
+const DATE_LOCALE: Record<string, string> = { en: 'en-GB', ru: 'ru-RU' };
+
 // Timestamps (createdAt): show in the user's local timezone — "I created this today"
-const fmtTimestamp = (d: string | null) =>
-  d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+const fmtTimestamp = (d: string | null, locale: string) =>
+  d ? new Date(d).toLocaleDateString(DATE_LOCALE[locale] ?? 'en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
 
 // Date-only values (dateOfCompletion): stored as UTC midnight, force UTC display so
 // it never drifts to the previous day in negative-offset timezones
-const fmtDateOnly = (d: string | null) =>
-  d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }) : '—';
+const fmtDateOnly = (d: string | null, locale: string) =>
+  d ? new Date(d).toLocaleDateString(DATE_LOCALE[locale] ?? 'en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }) : '—';
 
 export function TasksPage() {
+  const { t, i18n } = useTranslation();
   const { tasks, loading, fetchTasks, removeTask } = useTasksStore();
   const jobTypes = useJobTypesStore((s) => s.jobTypes);
   const fetchJobTypes = useJobTypesStore((s) => s.fetchJobTypes);
@@ -68,10 +72,10 @@ export function TasksPage() {
     try {
       await deleteTask(deleteTarget.id);
       removeTask(deleteTarget.id);
-      notify('Task deleted', 'info');
+      notify(t('tasks.deleted'), 'info');
       setDeleteTarget(null);
     } catch (e: unknown) {
-      notify((e as { message: string }).message ?? 'Failed to delete task', 'error');
+      notify((e as { message: string }).message ?? t('tasks.deleteFailed'), 'error');
     } finally {
       setDeleting(false);
     }
@@ -80,7 +84,7 @@ export function TasksPage() {
   const columns: GridColDef[] = [
     {
       field: 'jobType',
-      headerName: 'Job Type',
+      headerName: t('tasks.col.jobType'),
       flex: 1.2,
       minWidth: 140,
       renderCell: (params: GridRenderCellParams<TaskResponse, string>) => {
@@ -101,7 +105,7 @@ export function TasksPage() {
     },
     {
       field: 'scopeOfWork',
-      headerName: 'Scope of Work',
+      headerName: t('tasks.col.scopeOfWork'),
       flex: 1,
       minWidth: 130,
       sortable: false,
@@ -119,19 +123,19 @@ export function TasksPage() {
     },
     {
       field: 'worker',
-      headerName: 'Worker',
+      headerName: t('tasks.col.worker'),
       flex: 1,
       minWidth: 120,
       valueGetter: (_: unknown, row: TaskResponse) => row.user?.username ?? '',
     },
     {
       field: 'jobRole',
-      headerName: 'Role',
+      headerName: t('tasks.col.role'),
       width: 120,
       valueGetter: (_: unknown, row: TaskResponse) => row.user?.jobRole ?? '',
       renderCell: (params: GridRenderCellParams) => (
         <Chip
-          label={params.value}
+          label={t(`role.${params.value}`)}
           size="small"
           sx={{
             background: params.value === 'Supervisor'
@@ -146,13 +150,13 @@ export function TasksPage() {
     },
     {
       field: 'status',
-      headerName: 'Status',
+      headerName: t('common.status'),
       width: 130,
       renderCell: (params: GridRenderCellParams<TaskResponse, TaskStatus>) => {
         const s = STATUS_COLORS[params.value!] ?? STATUS_COLORS.ToBeDone;
         return (
           <Chip
-            label={params.value}
+            label={t(`status.${params.value}`)}
             size="small"
             sx={{
               background: s.bg,
@@ -167,18 +171,18 @@ export function TasksPage() {
     },
     {
       field: 'createdAt',
-      headerName: 'Created',
+      headerName: t('tasks.col.created'),
       width: 120,
       renderCell: (params: GridRenderCellParams) => (
-        <Typography variant="caption" color="text.secondary">{fmtTimestamp(params.value)}</Typography>
+        <Typography variant="caption" color="text.secondary">{fmtTimestamp(params.value, i18n.language)}</Typography>
       ),
     },
     {
       field: 'dateOfCompletion',
-      headerName: 'Completed On',
+      headerName: t('tasks.col.completedOn'),
       width: 130,
       renderCell: (params: GridRenderCellParams) => (
-        <Typography variant="caption" color="text.secondary">{fmtDateOnly(params.value)}</Typography>
+        <Typography variant="caption" color="text.secondary">{fmtDateOnly(params.value, i18n.language)}</Typography>
       ),
     },
     {
@@ -189,7 +193,7 @@ export function TasksPage() {
       disableColumnMenu: true,
       renderCell: (params: GridRenderCellParams<TaskResponse>) => (
         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%', gap: 0.5 }}>
-          <Tooltip title="Edit">
+          <Tooltip title={t('common.edit')}>
             <IconButton
               size="small"
               onClick={(e) => { e.stopPropagation(); setEditTarget(params.row); }}
@@ -197,7 +201,7 @@ export function TasksPage() {
               <EditIcon fontSize="small" sx={{ color: '#a78bfa' }} />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Delete">
+          <Tooltip title={t('common.delete')}>
             <IconButton
               size="small"
               onClick={(e) => { e.stopPropagation(); setDeleteTarget(params.row); }}
@@ -216,14 +220,14 @@ export function TasksPage() {
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
           <Box>
             <Typography variant="h5" sx={{ fontFamily: '"Syne", sans-serif', fontWeight: 700 }}>
-              Tasks
+              {t('tasks.title')}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {tasks.length} task{tasks.length !== 1 ? 's' : ''}
+              {t('tasks.count', { count: tasks.length })}
             </Typography>
           </Box>
           <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCreateOpen(true)}>
-            New Task
+            {t('tasks.newTask')}
           </Button>
         </Box>
 
@@ -259,17 +263,17 @@ export function TasksPage() {
 
         <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
           <DialogTitle sx={{ fontFamily: '"Syne", sans-serif', fontWeight: 700 }}>
-            Delete Task?
+            {t('tasks.delete.title')}
           </DialogTitle>
           <DialogContent>
             <Typography color="text.secondary">
-              Are you sure you want to delete the task <strong>{deleteTarget?.jobType}</strong>? This cannot be undone.
+              {t('tasks.delete.confirmText', { name: deleteTarget?.jobType })}
             </Typography>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3 }}>
-            <Button onClick={() => setDeleteTarget(null)} color="inherit">Cancel</Button>
+            <Button onClick={() => setDeleteTarget(null)} color="inherit">{t('common.cancel')}</Button>
             <Button variant="contained" color="error" onClick={handleDelete} disabled={deleting}>
-              Delete
+              {t('common.delete')}
             </Button>
           </DialogActions>
         </Dialog>

@@ -33,6 +33,13 @@ export class JobTypeAlreadyExistsException extends Error {
     }
 }
 
+export class JobTypeHasRelatedTasksException extends Error {
+    constructor(message: string = 'Cannot delete job type because it has associated tasks') {
+        super(message);
+        this.name = 'JobTypeHasRelatedTasksException';
+    }
+}
+
 export class InternalJobTypeServiceException extends Error {
     constructor(message: string = 'An internal error occurred in the Job Type Service') {
         super(message);

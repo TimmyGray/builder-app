@@ -13,6 +13,7 @@ import {
   Box,
   CircularProgress,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { useJobTypesStore } from '@/stores/jobTypesStore';
 import { useNotifyStore } from '@/stores/notifyStore';
 import { createJobType } from '@/api/jobTypes';
@@ -24,6 +25,7 @@ interface Props {
 }
 
 export function CreateJobTypeModal({ open, onClose }: Props) {
+  const { t } = useTranslation();
   const addJobType = useJobTypesStore((s) => s.addJobType);
   const notify = useNotifyStore((s) => s.notify);
   const [name, setName] = useState('');
@@ -42,11 +44,11 @@ export function CreateJobTypeModal({ open, onClose }: Props) {
         measure: measure || undefined,
       });
       addJobType(jt);
-      notify('Job type created', 'success');
+      notify(t('createJobType.created'), 'success');
       reset();
       onClose();
     } catch (e: unknown) {
-      notify((e as { message: string }).message ?? 'Failed to create job type', 'error');
+      notify((e as { message: string }).message ?? t('createJobType.createFailed'), 'error');
     } finally {
       setSubmitting(false);
     }
@@ -60,7 +62,7 @@ export function CreateJobTypeModal({ open, onClose }: Props) {
       fullWidth
     >
       <DialogTitle sx={{ fontFamily: '"Syne", sans-serif', fontWeight: 700 }}>
-        New Job Type
+        {t('createJobType.title')}
       </DialogTitle>
 
       <DialogContent>
@@ -69,27 +71,27 @@ export function CreateJobTypeModal({ open, onClose }: Props) {
             autoFocus
             fullWidth
             size="small"
-            label="Name"
+            label={t('common.name')}
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
           <TextField
             fullWidth
             size="small"
-            label="Description"
+            label={t('common.description')}
             multiline
             minRows={2}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
           <FormControl fullWidth size="small">
-            <InputLabel>Measure</InputLabel>
+            <InputLabel>{t('common.measure')}</InputLabel>
             <Select
               value={measure}
               onChange={(e) => setMeasure(e.target.value as Measure | '')}
-              label="Measure"
+              label={t('common.measure')}
             >
-              <MenuItem value=""><em>None</em></MenuItem>
+              <MenuItem value=""><em>{t('common.none')}</em></MenuItem>
               {MEASURE_OPTIONS.map((m) => (
                 <MenuItem key={m} value={m}>{MEASURE_LABELS[m]}</MenuItem>
               ))}
@@ -99,14 +101,14 @@ export function CreateJobTypeModal({ open, onClose }: Props) {
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 3 }}>
-        <Button onClick={onClose} color="inherit">Cancel</Button>
+        <Button onClick={onClose} color="inherit">{t('common.cancel')}</Button>
         <Button
           variant="contained"
           onClick={handleSubmit}
           disabled={submitting || !name.trim()}
           startIcon={submitting ? <CircularProgress size={14} /> : null}
         >
-          Create
+          {t('common.create')}
         </Button>
       </DialogActions>
     </Dialog>

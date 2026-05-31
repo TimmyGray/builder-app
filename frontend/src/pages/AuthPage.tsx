@@ -16,12 +16,14 @@ import {
   Fade,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/authStore';
 import { useNotifyStore } from '@/stores/notifyStore';
 import { signIn, signUp } from '@/api/auth';
 import type { UserJobRole } from '@/types/api';
 
 export function AuthPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const setUser = useAuthStore((s) => s.setUser);
   const notify = useNotifyStore((s) => s.notify);
@@ -42,7 +44,7 @@ export function AuthPage() {
       setUser(user);
       navigate('/tasks');
     } catch (err: unknown) {
-      notify((err as { message: string }).message ?? 'Authentication failed', 'error');
+      notify((err as { message: string }).message ?? t('auth.failed'), 'error');
     } finally {
       setLoading(false);
     }
@@ -120,7 +122,7 @@ export function AuthPage() {
               Builder App
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Manage tasks and job types with your team
+              {t('auth.subtitle')}
             </Typography>
           </Box>
 
@@ -139,15 +141,15 @@ export function AuthPage() {
               },
             }}
           >
-            <Tab label="Sign In" />
-            <Tab label="Sign Up" />
+            <Tab label={t('auth.signIn')} />
+            <Tab label={t('auth.signUp')} />
           </Tabs>
 
           <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               fullWidth
               size="small"
-              label="Username"
+              label={t('auth.username')}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               autoComplete="username"
@@ -158,7 +160,7 @@ export function AuthPage() {
               fullWidth
               size="small"
               type="password"
-              label="Password"
+              label={t('auth.password')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete={tab === 0 ? 'current-password' : 'new-password'}
@@ -167,14 +169,14 @@ export function AuthPage() {
 
             {tab === 1 && (
               <FormControl fullWidth size="small">
-                <InputLabel>Job Role</InputLabel>
+                <InputLabel>{t('auth.jobRole')}</InputLabel>
                 <Select
                   value={jobRole}
                   onChange={(e) => setJobRole(e.target.value as UserJobRole)}
-                  label="Job Role"
+                  label={t('auth.jobRole')}
                 >
-                  <MenuItem value="Builder">Builder</MenuItem>
-                  <MenuItem value="Supervisor">Supervisor</MenuItem>
+                  <MenuItem value="Builder">{t('role.Builder')}</MenuItem>
+                  <MenuItem value="Supervisor">{t('role.Supervisor')}</MenuItem>
                 </Select>
               </FormControl>
             )}
@@ -199,9 +201,9 @@ export function AuthPage() {
               {loading ? (
                 <CircularProgress size={22} color="inherit" />
               ) : tab === 0 ? (
-                'Sign In'
+                t('auth.signIn')
               ) : (
-                'Create Account'
+                t('auth.createAccount')
               )}
             </Button>
           </Box>

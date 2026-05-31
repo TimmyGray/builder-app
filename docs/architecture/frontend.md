@@ -38,6 +38,7 @@ The API base URL comes from `VITE_API_URL` (default `http://localhost:3000`). Th
 | Routing | **React Router 7** | `BrowserRouter` in `src/App.tsx` |
 | HTTP | **Axios 1** | one shared instance with interceptors in `src/api/client.ts` |
 | Fonts / theme | Google Fonts (Space Grotesk, Syne) + a dark MUI theme | loaded in `index.html`; theme in `src/theme.ts` |
+| Localisation | **i18next 24 + react-i18next 15** | `src/i18n/`; two locales (EN, RU); language persisted to `localStorage["lang"]` |
 
 ## Layered structure
 
@@ -61,6 +62,7 @@ graph TD
 | API wrappers | One typed function per endpoint; return parsed data | `frontend/src/api/` |
 | Client | Shared Axios instance: base URL, inject `username` header, normalise errors | `frontend/src/api/client.ts` |
 | Types | Hand-maintained mirrors of backend DTOs | `frontend/src/types/api.ts` |
+| i18n | Translation resources and i18next init; every component calls `useTranslation()` | `frontend/src/i18n/` |
 
 ### Modal inventory
 
@@ -77,6 +79,12 @@ Each domain entity has three dialogs plus a shared delete confirmation:
 | `ProfileModal` | `modals/ProfileModal.tsx` | Username change, sign-out, account delete |
 
 Action buttons (edit, delete) call `e.stopPropagation()` so they do not also trigger the row/card click that opens the view modal.
+
+### Other shared components
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| `LanguageSwitcher` | `components/LanguageSwitcher.tsx` | Compact EN / RU toggle; calls `i18n.changeLanguage()` and writes to `localStorage["lang"]` |
 
 ## Routing & layout
 
@@ -104,6 +112,27 @@ Five Zustand stores in `frontend/src/stores/`:
 | `notifyStore` | `notification` (`message`, `severity`, `key`) | `notify(message, severity)` / `clear`; drives `GlobalSnackbar`. |
 
 **Update pattern:** the store is a cache, not an orchestrator. A page loads via `fetch*` on mount; a mutation is done by the component calling the `api/` wrapper directly, then folding the returned entity into the store with `add*`/`replace*`/`remove*` (no automatic re-fetch). Stores are read via hook selectors, e.g. `useTasksStore((s) => s.tasks)`.
+
+## Localisation (i18n)
+
+All UI strings (except the brand name "Builder App") are translated via **i18next + react-i18next**. Two locales are bundled:
+
+| File | Locale |
+|------|--------|
+| `src/i18n/en.ts` | English (default fallback) |
+| `src/i18n/ru.ts` | Russian |
+
+`src/i18n/index.ts` initialises i18next, reads the saved locale from `localStorage["lang"]` (defaults to `ru`), and registers both resources. It is imported once at the top of `src/main.tsx` before `<App />` mounts.
+
+Every component that renders a user-facing string calls `const { t } = useTranslation()` and uses `t('key')`. Keys are dot-namespaced (`common.cancel`, `tasks.col.worker`, `status.ToBeDone`, etc.) and defined in both translation files.
+
+**Language switching** is handled by `LanguageSwitcher` (rendered in `Header`): it calls `i18n.changeLanguage(lang)` and writes the choice to `localStorage["lang"]` so the preference survives a reload.
+
+**Pluralisation** uses i18next's `Intl.PluralRules`-backed resolver. Russian plural forms (`_one` / `_few` / `_many`) are all declared in `ru.ts`; English only needs `_one` / `_other`.
+
+**Date formatting** in `TasksPage` and `ViewTaskModal` is locale-aware: `en` → `en-GB`, `ru` → `ru-RU` passed to `toLocaleDateString()`.
+
+> Adding a new string: add the key+value to both `en.ts` and `ru.ts`, then call `t('your.key')` in the component. TypeScript will not enforce key coverage between the two files, so keep them in sync manually.
 
 ## Authentication flow
 

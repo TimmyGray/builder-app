@@ -12,6 +12,10 @@ export class JobTypeRepository {
         return await this.repository.findOne({ where: { id } });
     }
 
+    async findOneByIdWithTasks(id: number): Promise<JobType | null> {
+        return await this.repository.findOne({ where: { id }, relations: { tasks: true } });
+    }
+
     async findOneByName(name: string): Promise<JobType | null> {
         return await this.repository.findOne({ where: { name } });
     }

@@ -14,6 +14,7 @@ import {
   TextField,
   InputAdornment,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { useTasksStore } from '@/stores/tasksStore';
 import { useUsersStore } from '@/stores/usersStore';
 import { useNotifyStore } from '@/stores/notifyStore';
@@ -32,6 +33,7 @@ interface Props {
 const MENU_PROPS = { slotProps: { paper: { sx: { maxHeight: 280 } } } };
 
 export function EditTaskModal({ open, onClose, task }: Props) {
+  const { t } = useTranslation();
   const { users, fetchUsers } = useUsersStore();
   const replaceTask = useTasksStore((s) => s.replaceTask);
   const notify = useNotifyStore((s) => s.notify);
@@ -81,10 +83,10 @@ export function EditTaskModal({ open, onClose, task }: Props) {
 
       const updated = await updateTask(task.id, patch);
       replaceTask(updated);
-      notify('Task updated', 'success');
+      notify(t('editTask.updated'), 'success');
       onClose();
     } catch (e: unknown) {
-      notify((e as { message: string }).message ?? 'Failed to update task', 'error');
+      notify((e as { message: string }).message ?? t('editTask.updateFailed'), 'error');
     } finally {
       setSubmitting(false);
     }
@@ -93,23 +95,23 @@ export function EditTaskModal({ open, onClose, task }: Props) {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
       <DialogTitle sx={{ fontFamily: '"Syne", sans-serif', fontWeight: 700 }}>
-        Edit Task
+        {t('editTask.title')}
       </DialogTitle>
 
       <DialogContent>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1 }}>
           <FormControl fullWidth size="small">
-            <InputLabel>Status</InputLabel>
-            <Select value={status} onChange={(e) => setStatus(e.target.value as TaskStatus)} label="Status">
+            <InputLabel>{t('common.status')}</InputLabel>
+            <Select value={status} onChange={(e) => setStatus(e.target.value as TaskStatus)} label={t('common.status')}>
               {STATUS_OPTIONS.map((s) => (
-                <MenuItem key={s} value={s}>{s}</MenuItem>
+                <MenuItem key={s} value={s}>{t(`status.${s}`)}</MenuItem>
               ))}
             </Select>
           </FormControl>
 
           <FormControl fullWidth size="small">
-            <InputLabel>Reassign Worker</InputLabel>
-            <Select value={userId} onChange={(e) => setUserId(e.target.value as number)} label="Reassign Worker" MenuProps={MENU_PROPS}>
+            <InputLabel>{t('editTask.reassignWorker')}</InputLabel>
+            <Select value={userId} onChange={(e) => setUserId(e.target.value as number)} label={t('editTask.reassignWorker')} MenuProps={MENU_PROPS}>
               {users.map((u) => (
                 <MenuItem key={u.id} value={u.id}>{u.username}</MenuItem>
               ))}
@@ -120,7 +122,7 @@ export function EditTaskModal({ open, onClose, task }: Props) {
             fullWidth
             size="small"
             type="date"
-            label="Date of Completion"
+            label={t('common.dateOfCompletion')}
             value={dateOfCompletion}
             onChange={(e) => {
               setDateOfCompletion(e.target.value);
@@ -132,17 +134,17 @@ export function EditTaskModal({ open, onClose, task }: Props) {
           <TextField
             fullWidth
             size="small"
-            label="Scope of work"
+            label={t('common.scopeOfWork')}
             type={measure ? 'number' : 'text'}
             value={scopeValue}
             onChange={(e) => setScopeValue(e.target.value)}
             error={scopeInvalid}
             helperText={
               scopeInvalid
-                ? 'Enter a positive number'
+                ? t('common.enterPositiveNumber')
                 : measure
-                  ? `Amount of work done (${MEASURE_LABELS[measure]})`
-                  : 'Describe the work done'
+                  ? t('common.amountOfWork', { unit: MEASURE_LABELS[measure] })
+                  : t('editTask.describeWork')
             }
             slotProps={
               measure
@@ -159,14 +161,14 @@ export function EditTaskModal({ open, onClose, task }: Props) {
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 3 }}>
-        <Button onClick={onClose} color="inherit">Cancel</Button>
+        <Button onClick={onClose} color="inherit">{t('common.cancel')}</Button>
         <Button
           variant="contained"
           onClick={handleSubmit}
           disabled={submitting || scopeInvalid}
           startIcon={submitting ? <CircularProgress size={14} /> : null}
         >
-          Save Changes
+          {t('editTask.saveChanges')}
         </Button>
       </DialogActions>
     </Dialog>

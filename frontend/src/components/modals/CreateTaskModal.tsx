@@ -15,6 +15,7 @@ import {
   TextField,
   InputAdornment,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { useUsersStore } from '@/stores/usersStore';
 import { useJobTypesStore } from '@/stores/jobTypesStore';
 import { useTasksStore } from '@/stores/tasksStore';
@@ -33,6 +34,7 @@ interface Props {
 const MENU_PROPS = { slotProps: { paper: { sx: { maxHeight: 280 } } } };
 
 export function CreateTaskModal({ open, onClose }: Props) {
+  const { t } = useTranslation();
   const { users, fetchUsers } = useUsersStore();
   const { jobTypes, fetchJobTypes } = useJobTypesStore();
   const addTask = useTasksStore((s) => s.addTask);
@@ -76,10 +78,10 @@ export function CreateTaskModal({ open, onClose }: Props) {
       }
       const task = await createTask(userId as number, jobTypeId as number, input);
       addTask(task);
-      notify('Task created', 'success');
+      notify(t('createTask.created'), 'success');
       onClose();
     } catch (e: unknown) {
-      notify((e as { message: string }).message ?? 'Failed to create task', 'error');
+      notify((e as { message: string }).message ?? t('createTask.createFailed'), 'error');
     } finally {
       setSubmitting(false);
     }
@@ -88,19 +90,19 @@ export function CreateTaskModal({ open, onClose }: Props) {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
       <DialogTitle sx={{ fontFamily: '"Syne", sans-serif', fontWeight: 700 }}>
-        New Task
+        {t('createTask.title')}
       </DialogTitle>
 
       <DialogContent>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1 }}>
           <FormControl fullWidth size="small">
-            <InputLabel>Worker</InputLabel>
-            <Select value={userId} onChange={(e) => setUserId(e.target.value as number)} label="Worker" MenuProps={MENU_PROPS}>
+            <InputLabel>{t('createTask.worker')}</InputLabel>
+            <Select value={userId} onChange={(e) => setUserId(e.target.value as number)} label={t('createTask.worker')} MenuProps={MENU_PROPS}>
               {users.map((u) => (
                 <MenuItem key={u.id} value={u.id}>
                   <Box>
                     <Typography variant="body2" sx={{ fontWeight: 600 }}>{u.username}</Typography>
-                    <Typography variant="caption" color="text.secondary">{u.jobRole}</Typography>
+                    <Typography variant="caption" color="text.secondary">{t(`role.${u.jobRole}`)}</Typography>
                   </Box>
                 </MenuItem>
               ))}
@@ -108,11 +110,11 @@ export function CreateTaskModal({ open, onClose }: Props) {
           </FormControl>
 
           <FormControl fullWidth size="small">
-            <InputLabel>Job Type</InputLabel>
+            <InputLabel>{t('createTask.jobType')}</InputLabel>
             <Select
               value={jobTypeId}
               onChange={(e) => { setJobTypeId(e.target.value as number); setScopeValue(''); }}
-              label="Job Type"
+              label={t('createTask.jobType')}
               MenuProps={MENU_PROPS}
             >
               {jobTypes.map((jt) => (
@@ -124,10 +126,10 @@ export function CreateTaskModal({ open, onClose }: Props) {
           </FormControl>
 
           <FormControl fullWidth size="small">
-            <InputLabel>Status</InputLabel>
-            <Select value={status} onChange={(e) => { setStatus(e.target.value as TaskStatus); if (e.target.value !== 'Completed') setDateOfCompletion(''); }} label="Status">
+            <InputLabel>{t('common.status')}</InputLabel>
+            <Select value={status} onChange={(e) => { setStatus(e.target.value as TaskStatus); if (e.target.value !== 'Completed') setDateOfCompletion(''); }} label={t('common.status')}>
               {STATUS_OPTIONS.map((s) => (
-                <MenuItem key={s} value={s}>{s}</MenuItem>
+                <MenuItem key={s} value={s}>{t(`status.${s}`)}</MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -137,7 +139,7 @@ export function CreateTaskModal({ open, onClose }: Props) {
               fullWidth
               size="small"
               type="date"
-              label="Date of Completion"
+              label={t('common.dateOfCompletion')}
               value={dateOfCompletion}
               onChange={(e) => setDateOfCompletion(e.target.value)}
               slotProps={{ inputLabel: { shrink: true } }}
@@ -148,17 +150,17 @@ export function CreateTaskModal({ open, onClose }: Props) {
             <TextField
               fullWidth
               size="small"
-              label="Scope of work"
+              label={t('common.scopeOfWork')}
               type={measure ? 'number' : 'text'}
               value={scopeValue}
               onChange={(e) => setScopeValue(e.target.value)}
               error={scopeInvalid}
               helperText={
                 scopeInvalid
-                  ? 'Enter a positive number'
+                  ? t('common.enterPositiveNumber')
                   : measure
-                    ? `Amount of work done (${MEASURE_LABELS[measure]})`
-                    : 'Describe the work done (optional)'
+                    ? t('common.amountOfWork', { unit: MEASURE_LABELS[measure] })
+                    : t('createTask.describeWork')
               }
               slotProps={
                 measure
@@ -176,14 +178,14 @@ export function CreateTaskModal({ open, onClose }: Props) {
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 3 }}>
-        <Button onClick={onClose} color="inherit">Cancel</Button>
+        <Button onClick={onClose} color="inherit">{t('common.cancel')}</Button>
         <Button
           variant="contained"
           onClick={handleSubmit}
           disabled={submitting || !userId || !jobTypeId || scopeInvalid}
           startIcon={submitting ? <CircularProgress size={14} /> : null}
         >
-          Create Task
+          {t('createTask.create')}
         </Button>
       </DialogActions>
     </Dialog>

@@ -20,15 +20,13 @@ import {
 import MenuIcon from '@mui/icons-material/Menu';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/authStore';
 import { ProfileModal } from './modals/ProfileModal';
-
-const NAV_ITEMS = [
-  { label: 'Tasks', path: '/tasks' },
-  { label: 'Job Types', path: '/job-types' },
-];
+import { LanguageSwitcher } from './LanguageSwitcher';
 
 export function Header() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
@@ -36,6 +34,11 @@ export function Header() {
   const user = useAuthStore((s) => s.user);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+
+  const NAV_ITEMS = [
+    { label: t('nav.tasks'), path: '/tasks' },
+    { label: t('nav.jobTypes'), path: '/job-types' },
+  ];
 
   const currentTab = NAV_ITEMS.findIndex((n) => location.pathname.startsWith(n.path));
 
@@ -90,6 +93,8 @@ export function Header() {
 
             {isMobile && <Box sx={{ flex: 1 }} />}
 
+            <LanguageSwitcher />
+
             {/* User button */}
             <Button
               startIcon={<AccountCircleIcon />}
@@ -98,7 +103,7 @@ export function Header() {
               size="small"
               sx={{ flexShrink: 0 }}
             >
-              {user?.username ?? 'Account'}
+              {user?.username ?? t('nav.account')}
             </Button>
 
             {/* Mobile menu */}

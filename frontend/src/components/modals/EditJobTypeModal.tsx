@@ -13,6 +13,7 @@ import {
   Box,
   CircularProgress,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { useJobTypesStore } from '@/stores/jobTypesStore';
 import { useNotifyStore } from '@/stores/notifyStore';
 import { updateJobType } from '@/api/jobTypes';
@@ -25,6 +26,7 @@ interface Props {
 }
 
 export function EditJobTypeModal({ open, onClose, jobType }: Props) {
+  const { t } = useTranslation();
   const replaceJobType = useJobTypesStore((s) => s.replaceJobType);
   const notify = useNotifyStore((s) => s.notify);
   const [name, setName] = useState('');
@@ -49,10 +51,10 @@ export function EditJobTypeModal({ open, onClose, jobType }: Props) {
         measure: measure || undefined,
       });
       replaceJobType(updated);
-      notify('Job type updated', 'success');
+      notify(t('editJobType.updated'), 'success');
       onClose();
     } catch (e: unknown) {
-      notify((e as { message: string }).message ?? 'Failed to update job type', 'error');
+      notify((e as { message: string }).message ?? t('editJobType.updateFailed'), 'error');
     } finally {
       setSubmitting(false);
     }
@@ -61,7 +63,7 @@ export function EditJobTypeModal({ open, onClose, jobType }: Props) {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
       <DialogTitle sx={{ fontFamily: '"Syne", sans-serif', fontWeight: 700 }}>
-        Edit Job Type
+        {t('editJobType.title')}
       </DialogTitle>
 
       <DialogContent>
@@ -70,27 +72,27 @@ export function EditJobTypeModal({ open, onClose, jobType }: Props) {
             autoFocus
             fullWidth
             size="small"
-            label="Name"
+            label={t('common.name')}
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
           <TextField
             fullWidth
             size="small"
-            label="Description"
+            label={t('common.description')}
             multiline
             minRows={2}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
           <FormControl fullWidth size="small">
-            <InputLabel>Measure</InputLabel>
+            <InputLabel>{t('common.measure')}</InputLabel>
             <Select
               value={measure}
               onChange={(e) => setMeasure(e.target.value as Measure | '')}
-              label="Measure"
+              label={t('common.measure')}
             >
-              <MenuItem value=""><em>None</em></MenuItem>
+              <MenuItem value=""><em>{t('common.none')}</em></MenuItem>
               {MEASURE_OPTIONS.map((m) => (
                 <MenuItem key={m} value={m}>{MEASURE_LABELS[m]}</MenuItem>
               ))}
@@ -100,14 +102,14 @@ export function EditJobTypeModal({ open, onClose, jobType }: Props) {
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 3 }}>
-        <Button onClick={onClose} color="inherit">Cancel</Button>
+        <Button onClick={onClose} color="inherit">{t('common.cancel')}</Button>
         <Button
           variant="contained"
           onClick={handleSubmit}
           disabled={submitting || !name.trim()}
           startIcon={submitting ? <CircularProgress size={14} /> : null}
         >
-          Save
+          {t('common.save')}
         </Button>
       </DialogActions>
     </Dialog>

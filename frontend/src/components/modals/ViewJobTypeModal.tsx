@@ -10,6 +10,7 @@ import {
   Divider,
   alpha,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { MEASURE_LABELS, type JobTypeResponse } from '@/types/api';
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -34,23 +35,25 @@ interface Props {
 }
 
 export function ViewJobTypeModal({ open, onClose, jobType }: Props) {
+  const { t } = useTranslation();
+
   if (!jobType) return null;
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
       <DialogTitle sx={{ fontFamily: '"Syne", sans-serif', fontWeight: 700 }}>
-        Job Type Details
+        {t('viewJobType.title')}
       </DialogTitle>
 
       <DialogContent>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1 }}>
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 2, alignItems: 'start' }}>
-            <Field label="Name">
+            <Field label={t('common.name')}>
               <Typography variant="body1" sx={{ fontWeight: 600 }}>
                 {jobType.name}
               </Typography>
             </Field>
-            <Field label="Measure">
+            <Field label={t('common.measure')}>
               {jobType.measure ? (
                 <Chip
                   label={MEASURE_LABELS[jobType.measure]}
@@ -65,7 +68,7 @@ export function ViewJobTypeModal({ open, onClose, jobType }: Props) {
                 />
               ) : (
                 <Typography variant="body2" color="text.disabled">
-                  None
+                  {t('common.none')}
                 </Typography>
               )}
             </Field>
@@ -73,13 +76,13 @@ export function ViewJobTypeModal({ open, onClose, jobType }: Props) {
 
           <Divider sx={{ borderColor: alpha('#7c3aed', 0.15) }} />
 
-          <Field label="Description">
+          <Field label={t('common.description')}>
             <Typography
               variant="body2"
               color={jobType.description ? 'text.secondary' : 'text.disabled'}
               sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
             >
-              {jobType.description || 'No description'}
+              {jobType.description || t('viewJobType.noDescription')}
             </Typography>
           </Field>
 
@@ -91,7 +94,7 @@ export function ViewJobTypeModal({ open, onClose, jobType }: Props) {
 
       <DialogActions sx={{ px: 3, pb: 3 }}>
         <Button onClick={onClose} color="inherit">
-          Close
+          {t('common.close')}
         </Button>
       </DialogActions>
     </Dialog>

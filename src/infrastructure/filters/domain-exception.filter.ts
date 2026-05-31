@@ -60,7 +60,7 @@ export class DomainExceptionFilter implements ExceptionFilter {
             if (name.endsWith('NotFoundException')) {
                 return { status: HttpStatus.NOT_FOUND, message: exception.message };
             }
-            if (name.endsWith('AlreadyExistsException')) {
+            if (name.endsWith('AlreadyExistsException') || name.endsWith('HasRelatedTasksException')) {
                 return { status: HttpStatus.CONFLICT, message: exception.message };
             }
             if (name === 'InvalidCredentialsException' || name === 'UnauthorizedUserException') {

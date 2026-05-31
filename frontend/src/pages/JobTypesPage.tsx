@@ -20,6 +20,7 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import WorkIcon from '@mui/icons-material/Work';
+import { useTranslation } from 'react-i18next';
 import { useJobTypesStore } from '@/stores/jobTypesStore';
 import { useNotifyStore } from '@/stores/notifyStore';
 import { deleteJobType } from '@/api/jobTypes';
@@ -29,6 +30,7 @@ import { ViewJobTypeModal } from '@/components/modals/ViewJobTypeModal';
 import { MEASURE_LABELS, type JobTypeResponse } from '@/types/api';
 
 export function JobTypesPage() {
+  const { t } = useTranslation();
   const { jobTypes, loading, fetchJobTypes, removeJobType } = useJobTypesStore();
   const notify = useNotifyStore((s) => s.notify);
 
@@ -46,10 +48,10 @@ export function JobTypesPage() {
     try {
       await deleteJobType(deleteTarget.id);
       removeJobType(deleteTarget.id);
-      notify('Job type deleted', 'info');
+      notify(t('jobTypes.deleted'), 'info');
       setDeleteTarget(null);
     } catch (e: unknown) {
-      notify((e as { message: string }).message ?? 'Failed to delete job type', 'error');
+      notify((e as { message: string }).message ?? t('jobTypes.deleteFailed'), 'error');
     } finally {
       setDeleting(false);
     }
@@ -61,14 +63,14 @@ export function JobTypesPage() {
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
           <Box>
             <Typography variant="h5" sx={{ fontFamily: '"Syne", sans-serif', fontWeight: 700 }}>
-              Job Types
+              {t('jobTypes.title')}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {jobTypes.length} type{jobTypes.length !== 1 ? 's' : ''}
+              {t('jobTypes.count', { count: jobTypes.length })}
             </Typography>
           </Box>
           <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCreateOpen(true)}>
-            New Job Type
+            {t('jobTypes.newJobType')}
           </Button>
         </Box>
 
@@ -85,13 +87,13 @@ export function JobTypesPage() {
           >
             <WorkIcon sx={{ fontSize: 64, color: alpha('#7c3aed', 0.3) }} />
             <Typography variant="h6" color="text.secondary" sx={{ fontFamily: '"Syne", sans-serif' }}>
-              No job types yet
+              {t('jobTypes.empty.title')}
             </Typography>
             <Typography variant="body2" color="text.disabled">
-              Create your first job type to get started
+              {t('jobTypes.empty.subtitle')}
             </Typography>
             <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCreateOpen(true)} sx={{ mt: 1 }}>
-              Create Job Type
+              {t('jobTypes.empty.create')}
             </Button>
           </Box>
         ) : (
@@ -178,7 +180,7 @@ export function JobTypesPage() {
                         minHeight: '4.8em',
                       }}
                     >
-                      {jt.description || 'No description'}
+                      {jt.description || t('jobTypes.noDescription')}
                     </Typography>
                   </Box>
 
@@ -194,7 +196,7 @@ export function JobTypesPage() {
                       pt: 1,
                     }}
                   >
-                    <Tooltip title="Edit">
+                    <Tooltip title={t('common.edit')}>
                       <IconButton
                         size="small"
                         onClick={(e) => { e.stopPropagation(); setEditTarget(jt); }}
@@ -202,7 +204,7 @@ export function JobTypesPage() {
                         <EditIcon fontSize="small" sx={{ color: '#a78bfa' }} />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title="Delete">
+                    <Tooltip title={t('common.delete')}>
                       <IconButton
                         size="small"
                         onClick={(e) => { e.stopPropagation(); setDeleteTarget(jt); }}
@@ -223,17 +225,17 @@ export function JobTypesPage() {
 
         <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
           <DialogTitle sx={{ fontFamily: '"Syne", sans-serif', fontWeight: 700 }}>
-            Delete Job Type?
+            {t('jobTypes.delete.title')}
           </DialogTitle>
           <DialogContent>
             <Typography color="text.secondary">
-              Delete <strong>{deleteTarget?.name}</strong>? Any tasks using this job type may be affected.
+              {t('jobTypes.delete.confirmText', { name: deleteTarget?.name })}
             </Typography>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3 }}>
-            <Button onClick={() => setDeleteTarget(null)} color="inherit">Cancel</Button>
+            <Button onClick={() => setDeleteTarget(null)} color="inherit">{t('common.cancel')}</Button>
             <Button variant="contained" color="error" onClick={handleDelete} disabled={deleting}>
-              Delete
+              {t('common.delete')}
             </Button>
           </DialogActions>
         </Dialog>
