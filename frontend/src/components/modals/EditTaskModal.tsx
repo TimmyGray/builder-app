@@ -152,7 +152,7 @@ export function EditTaskModal({ open, onClose, task }: Props) {
                     input: {
                       endAdornment: <InputAdornment position="end">{MEASURE_LABELS[measure]}</InputAdornment>,
                     },
-                    htmlInput: { min: 0, step: 'any' },
+                    htmlInput: { min: 0, step: 'any', onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => { if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault(); } },
                   }
                 : undefined
             }
