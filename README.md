@@ -29,10 +29,10 @@ docker compose up --build
 
 | Service | URL |
 |---------|-----|
-| Frontend (Vite) | http://localhost:5173 |
-| API | http://localhost:3000 |
-| Swagger UI | http://localhost:3000/api |
-| phpMyAdmin | http://localhost:8080 |
+| Frontend (Vite) | <http://localhost:5173> |
+| API | <http://localhost:3000> |
+| Swagger UI | <http://localhost:3000/api> |
+| phpMyAdmin | <http://localhost:8080> |
 
 **Database seeding** is controlled by the `SEED_DATABASE` variable in `.env` (default `true`). The seed script is idempotent — it checks whether the database is empty first and skips if data already exists.
 
@@ -80,6 +80,7 @@ npm run start:dev
 Configuration is read from `config/` via `node-config`. Secrets and local overrides go in `config/local.yaml` (gitignored). See `config/default.yaml` for available keys and `config/custom-environment-variables.yaml` for the env-var mapping.
 
 `config/local.yaml` example:
+
 ```yaml
 mysql:
   username: builder
@@ -140,18 +141,18 @@ The frontend is a separate npm project; see its layout in the **[Frontend guide]
 **Backend**
 
 - **Language:** TypeScript 5.7 (ES2023 target)
-- **Framework:** NestJS 11 (Express platform)
-- **Data:** MySQL 8 via TypeORM 1.0
+- **Framework:** NestJS 11 (Express platform) - Chosen for its modular architecture, dependency injection, and built-in support for validation, guards, and filters.
+- **Data:** MySQL 8 via TypeORM 1.0 - Chosen because of TypeORM's DataSource and Repository patterns fit well with Nest's DI and module system. Also it much easer and faster in a small projects and datasets with no complex relations or query needs then postgres.
 - **Config:** `node-config` (YAML, env-var overrides)
-- **Docs:** `@nestjs/swagger` (OpenAPI at `/api`)
-- **Auth:** `bcrypt` password hashing + a `username` request header guard
+- **Docs:** `@nestjs/swagger` (OpenAPI at `/api`) - Chosen for its seamless integration with NestJS, auto-generating API docs from decorators.
+- **Auth:** `bcrypt` password hashing + a `username` request header guard - Chosen for simplicity in this demo app; not production-ready but enough to demonstrate config and auth concepts.
 - **Testing:** Jest 30, Supertest (unit `*.spec.ts`, e2e `test/*.e2e-spec.ts`)
 
 **Frontend** (`frontend/`)
 
-- **Build/runtime:** Vite 8 + React 19, TypeScript
-- **UI:** MUI 9 (`@mui/material`, `@mui/x-data-grid`) with Emotion
-- **State / routing / HTTP:** Zustand 5 · React Router 7 · Axios 1
+- **Build/runtime:** Vite 8 + React 19, TypeScript -  Chosen for fast development experience out of the box. Simple cofigurations.
+- **UI:** MUI 9 (`@mui/material`, `@mui/x-data-grid`) with Emotion - Chose for its comprehensive component library and ease of styling. Modern React support and good accessibility out of the box.
+- **State / routing / HTTP:** Zustand 5 · React Router 7 · Axios 1 - Zustand for its minimal API. Honestly its an only one stagemanager using with react that I know. I also work with pinia and vue and they are very similar.
 
 ## Common commands
 
