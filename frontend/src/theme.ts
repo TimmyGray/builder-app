@@ -34,6 +34,7 @@ export const theme = createTheme({
           background: `radial-gradient(ellipse at 20% 50%, ${alpha(violet, 0.12)} 0%, transparent 60%),
                        radial-gradient(ellipse at 80% 20%, ${alpha(cyan, 0.08)} 0%, transparent 50%),
                        ${bg}`,
+          backgroundAttachment: 'fixed',
           minHeight: '100vh',
         },
         '::-webkit-scrollbar': { width: 6 },

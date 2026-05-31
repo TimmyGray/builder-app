@@ -27,6 +27,9 @@ interface Props {
   onClose: () => void;
 }
 
+// Cap the dropdown at ~5 rows so long Worker/Job Type lists scroll instead of overflowing.
+const MENU_PROPS = { slotProps: { paper: { sx: { maxHeight: 280 } } } };
+
 export function CreateTaskModal({ open, onClose }: Props) {
   const { users, fetchUsers } = useUsersStore();
   const { jobTypes, fetchJobTypes } = useJobTypesStore();
@@ -84,7 +87,7 @@ export function CreateTaskModal({ open, onClose }: Props) {
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Worker</InputLabel>
-            <Select value={userId} onChange={(e) => setUserId(e.target.value as number)} label="Worker">
+            <Select value={userId} onChange={(e) => setUserId(e.target.value as number)} label="Worker" MenuProps={MENU_PROPS}>
               {users.map((u) => (
                 <MenuItem key={u.id} value={u.id}>
                   <Box>
@@ -102,6 +105,7 @@ export function CreateTaskModal({ open, onClose }: Props) {
               value={jobTypeId}
               onChange={(e) => { setJobTypeId(e.target.value as number); setScopeValue(''); }}
               label="Job Type"
+              MenuProps={MENU_PROPS}
             >
               {jobTypes.map((jt) => (
                 <MenuItem key={jt.id} value={jt.id}>

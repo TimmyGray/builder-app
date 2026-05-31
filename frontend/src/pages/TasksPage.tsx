@@ -23,6 +23,7 @@ import { useNotifyStore } from '@/stores/notifyStore';
 import { deleteTask } from '@/api/tasks';
 import { CreateTaskModal } from '@/components/modals/CreateTaskModal';
 import { EditTaskModal } from '@/components/modals/EditTaskModal';
+import { ViewTaskModal } from '@/components/modals/ViewTaskModal';
 import { MEASURE_LABELS, type TaskResponse, type TaskStatus } from '@/types/api';
 
 const STATUS_COLORS: Record<TaskStatus, { color: string; bg: string }> = {
@@ -48,12 +49,12 @@ export function TasksPage() {
   const notify = useNotifyStore((s) => s.notify);
 
   const [createOpen, setCreateOpen] = useState(false);
+  const [viewTarget, setViewTarget] = useState<TaskResponse | null>(null);
   const [editTarget, setEditTarget] = useState<TaskResponse | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TaskResponse | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => { fetchTasks(); }, [fetchTasks]);
-  // Job types are loaded so the job-name cell can show each type's description on hover.
   useEffect(() => { fetchJobTypes(); }, [fetchJobTypes]);
 
   const descByName = useMemo(
@@ -86,8 +87,6 @@ export function TasksPage() {
         const description = descByName.get(params.value ?? '') ?? '';
         return (
           <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-            {/* Native title keeps the tooltip pinned right at the value; a MUI Tooltip
-                mis-positions inside the DataGrid's virtualized rows. */}
             <Typography
               variant="body2"
               noWrap
@@ -112,7 +111,9 @@ export function TasksPage() {
           : (row.scopeOfWork ?? '—'),
       renderCell: (params: GridRenderCellParams<TaskResponse, string>) => (
         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-          <Typography variant="body2" color="text.secondary" noWrap>{params.value}</Typography>
+          <Typography variant="body2" color="text.secondary" noWrap title={params.value}>
+            {params.value}
+          </Typography>
         </Box>
       ),
     },
@@ -189,12 +190,18 @@ export function TasksPage() {
       renderCell: (params: GridRenderCellParams<TaskResponse>) => (
         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%', gap: 0.5 }}>
           <Tooltip title="Edit">
-            <IconButton size="small" onClick={() => setEditTarget(params.row)}>
+            <IconButton
+              size="small"
+              onClick={(e) => { e.stopPropagation(); setEditTarget(params.row); }}
+            >
               <EditIcon fontSize="small" sx={{ color: '#a78bfa' }} />
             </IconButton>
           </Tooltip>
           <Tooltip title="Delete">
-            <IconButton size="small" onClick={() => setDeleteTarget(params.row)}>
+            <IconButton
+              size="small"
+              onClick={(e) => { e.stopPropagation(); setDeleteTarget(params.row); }}
+            >
               <DeleteIcon fontSize="small" sx={{ color: '#f87171' }} />
             </IconButton>
           </Tooltip>
@@ -215,11 +222,7 @@ export function TasksPage() {
               {tasks.length} task{tasks.length !== 1 ? 's' : ''}
             </Typography>
           </Box>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => setCreateOpen(true)}
-          >
+          <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCreateOpen(true)}>
             New Task
           </Button>
         </Box>
@@ -241,15 +244,19 @@ export function TasksPage() {
             disableRowSelectionOnClick
             pageSizeOptions={[10, 25, 50]}
             initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
-            sx={{ border: 'none' }}
+            onRowClick={(params) => setViewTarget(params.row as TaskResponse)}
+            sx={{
+              border: 'none',
+              '& .MuiDataGrid-row': { cursor: 'pointer' },
+            }}
             getRowId={(row) => row.id}
           />
         </Box>
 
         <CreateTaskModal open={createOpen} onClose={() => setCreateOpen(false)} />
+        <ViewTaskModal open={!!viewTarget} onClose={() => setViewTarget(null)} task={viewTarget} />
         <EditTaskModal open={!!editTarget} onClose={() => setEditTarget(null)} task={editTarget} />
 
-        {/* Delete confirmation */}
         <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
           <DialogTitle sx={{ fontFamily: '"Syne", sans-serif', fontWeight: 700 }}>
             Delete Task?

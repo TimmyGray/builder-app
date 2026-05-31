@@ -28,6 +28,9 @@ interface Props {
   task: TaskResponse | null;
 }
 
+// Cap the dropdown at ~5 rows so a long worker list scrolls instead of overflowing.
+const MENU_PROPS = { slotProps: { paper: { sx: { maxHeight: 280 } } } };
+
 export function EditTaskModal({ open, onClose, task }: Props) {
   const { users, fetchUsers } = useUsersStore();
   const replaceTask = useTasksStore((s) => s.replaceTask);
@@ -106,7 +109,7 @@ export function EditTaskModal({ open, onClose, task }: Props) {
 
           <FormControl fullWidth size="small">
             <InputLabel>Reassign Worker</InputLabel>
-            <Select value={userId} onChange={(e) => setUserId(e.target.value as number)} label="Reassign Worker">
+            <Select value={userId} onChange={(e) => setUserId(e.target.value as number)} label="Reassign Worker" MenuProps={MENU_PROPS}>
               {users.map((u) => (
                 <MenuItem key={u.id} value={u.id}>{u.username}</MenuItem>
               ))}
