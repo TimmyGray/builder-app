@@ -56,11 +56,27 @@ graph TD
 | Layer | Responsibility | Location |
 |-------|----------------|----------|
 | Pages | Route-level screens; fetch on mount, render MUI `DataGrid` / cards, open modals, handle delete | `frontend/src/pages/` |
-| Components / Modals | Reusable UI and create/edit/profile dialogs; controlled forms that call `api/` wrappers | `frontend/src/components/` |
+| Components / Modals | Reusable UI and dialogs — view (read-only), create, edit, profile; controlled forms call `api/` wrappers | `frontend/src/components/` |
 | Stores | Hold cached domain state (`list`, `loading`) + `fetch` and local `add`/`replace`/`remove` mutators | `frontend/src/stores/` |
 | API wrappers | One typed function per endpoint; return parsed data | `frontend/src/api/` |
 | Client | Shared Axios instance: base URL, inject `username` header, normalise errors | `frontend/src/api/client.ts` |
 | Types | Hand-maintained mirrors of backend DTOs | `frontend/src/types/api.ts` |
+
+### Modal inventory
+
+Each domain entity has three dialogs plus a shared delete confirmation:
+
+| Modal | File | Purpose |
+|-------|------|---------|
+| `ViewTaskModal` | `modals/ViewTaskModal.tsx` | Read-only task detail — opened by clicking any DataGrid row |
+| `CreateTaskModal` | `modals/CreateTaskModal.tsx` | New task form; adaptive scope field (numeric for measured job types, free text otherwise) |
+| `EditTaskModal` | `modals/EditTaskModal.tsx` | Edit status, worker, completion date, scope |
+| `ViewJobTypeModal` | `modals/ViewJobTypeModal.tsx` | Read-only job-type detail — opened by clicking a card |
+| `CreateJobTypeModal` | `modals/CreateJobTypeModal.tsx` | New job-type form with optional description and measure |
+| `EditJobTypeModal` | `modals/EditJobTypeModal.tsx` | Edit name, description, measure |
+| `ProfileModal` | `modals/ProfileModal.tsx` | Username change, sign-out, account delete |
+
+Action buttons (edit, delete) call `e.stopPropagation()` so they do not also trigger the row/card click that opens the view modal.
 
 ## Routing & layout
 
@@ -105,11 +121,18 @@ Header-based, matching the backend ([ADR-0003](decisions/0003-header-based-authe
 
 A representative write, end to end:
 
-1. User fills `CreateTaskModal` and submits; it calls `createTask(userId, jobTypeId)` from `src/api/tasks.ts` — `src/components/modals/CreateTaskModal.tsx`.
-2. The wrapper `POST`s `/tasks` through the shared client; the request interceptor adds the `username` header.
-3. On success the modal calls `tasksStore.addTask(task)` with the returned entity, `notify('Task created', 'success')`, and closes.
-4. `TasksPage`'s `DataGrid` re-renders from the updated store.
-5. On failure the response interceptor rejects with an `ApiError`; the modal's `catch` calls `notify(err.message, 'error')` → `GlobalSnackbar`.
+1. User opens `CreateTaskModal`, selects a worker and a job type. If the job type has a `measure`, the "Scope of work" field switches to a numeric input with a unit suffix (e.g. `m³`); otherwise it is free text. The submit button is blocked while the scope value is invalid.
+2. On submit the modal calls `createTask(userId, jobTypeId, { quantity? | scopeOfWork? })` from `src/api/tasks.ts`.
+3. The wrapper `POST`s `/tasks` through the shared client; the request interceptor adds the `username` header.
+4. On success the modal calls `tasksStore.addTask(task)` with the returned entity, `notify('Task created', 'success')`, and closes.
+5. `TasksPage`'s `DataGrid` re-renders from the updated store.
+6. On failure the response interceptor rejects with an `ApiError`; the modal's `catch` calls `notify(err.message, 'error')` → `GlobalSnackbar`.
+
+## Viewing a record
+
+Clicking a **task row** in the DataGrid (anywhere except the action buttons) opens `ViewTaskModal` — a read-only dialog showing all fields without truncation: job type + measure chip, worker, role, status, scope of work, created date, completion date.
+
+Clicking a **job-type card** opens `ViewJobTypeModal` — name, measure chip, and full description text.
 
 ## Types & the backend contract
 
