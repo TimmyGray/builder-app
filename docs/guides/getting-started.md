@@ -1,6 +1,6 @@
 # Getting Started
 
-> **Summary:** Install dependencies, start MySQL, point node-config at the YAML files, and run the API locally.
+> **Summary:** Two ways to run the full stack — Docker Compose (everything in one command) or locally (backend + frontend started separately).
 > **Read this when:** You're setting the project up for the first time.
 > **Audience:** both
 > **Related:** [Development](development.md) · [Configuration](../reference/configuration.md) · [Testing](testing.md)
@@ -11,58 +11,107 @@
 
 ## Prerequisites
 
-- **Node.js 20+** and npm
-- **Docker** (for the bundled MySQL), or an existing MySQL 8 instance
-- Windows, macOS, or Linux
+- **Docker Desktop** — for Option 1 (Docker), or just the DB in Option 2
+- **Node.js 20+** and npm — for Option 2 (local)
 
-## Steps
+---
 
-1. **Install dependencies**
-   ```bash
-   npm install
-   ```
+## Option 1 — Docker Compose (recommended)
 
-2. **Start MySQL (and phpMyAdmin)**
-   ```bash
-   docker compose up -d
-   ```
-   This starts MySQL 8 on `localhost:3306` (database `builder_app`, user `builder` / `builder`) and phpMyAdmin on `http://localhost:8080`. Credentials come from `docker-compose.yml` and match `src/configuration/local.yaml`.
+Starts MySQL, the NestJS API, and the Vite frontend in one command.
 
-3. **Tell node-config where the YAML lives.** The config files are in `src/configuration/`, but `node-config` looks in `./config` unless told otherwise. Set `NODE_CONFIG_DIR` before starting:
+```bash
+cp .env.example .env          # defaults work out of the box
+docker compose up --build
+```
 
-   ```bash
-   # bash / macOS / Linux
-   NODE_CONFIG_DIR=./src/configuration npm run start:dev
-   ```
-   ```powershell
-   # PowerShell (Windows)
-   $env:NODE_CONFIG_DIR = "./src/configuration"; npm run start:dev
-   ```
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost:5173 |
+| API | http://localhost:3000 |
+| Swagger UI | http://localhost:3000/api |
+| phpMyAdmin | http://localhost:8080 |
 
-   > The `cross-env` package is already a dependency, so you can also wrap the script:
-   > `npx cross-env NODE_CONFIG_DIR=./src/configuration nest start --watch`.
-   > See [Configuration](../reference/configuration.md#node_config_dir) for why this is needed.
+The seed script runs automatically on first start (controlled by `SEED_DATABASE` in `.env`, default `true`). It is idempotent — if the database already has data it skips without touching anything.
+
+To wipe the database and reseed from scratch:
+
+```bash
+docker compose down -v        # removes containers + the mysql_data volume
+docker compose up --build
+```
+
+---
+
+## Option 2 — Local development
+
+### 1. Start MySQL
+
+```bash
+docker compose up -d mysql
+```
+
+MySQL 8 on `localhost:3306`, database `builder_app`, user `builder`/`builder`. phpMyAdmin on `http://localhost:8080`.
+
+### 2. Backend
+
+```bash
+npm install
+npm run start:dev             # watches for changes, listens on :3000
+```
+
+Configuration is loaded from `config/` via `node-config` (that is already the default lookup path — no extra env var needed). Local overrides (DB credentials, bcrypt rounds) go in `config/local.yaml`, which is gitignored. See [Configuration](../reference/configuration.md).
+
+`config/local.yaml` example:
+```yaml
+mysql:
+  username: builder
+  password: builder
+
+auth:
+  rounds: 12
+```
+
+**Optional:** seed the database with sample data:
+
+```bash
+npm run seed
+```
+
+The seed script is idempotent — it checks `users.count()` first and exits early if the database is not empty.
+
+### 3. Frontend
+
+```bash
+cd frontend
+npm install
+cp .env.example .env          # VITE_API_URL=http://localhost:3000
+npm run dev                   # Vite dev server on http://localhost:5173
+```
+
+Or start both backend and frontend together from the repo root:
+
+```bash
+npm run start:all
+```
+
+---
 
 ## Verify it worked
 
-- The console logs that Nest started and routes are mapped.
-- Open **`http://localhost:3000/api`** — the Swagger UI lists Authentication, Users, Tasks, and Job Types.
-- Create a user to confirm the DB connection:
-  ```bash
-  curl -X POST http://localhost:3000/auth/signup \
-    -H "Content-Type: application/json" \
-    -d '{"username":"alice","password":"P@ssw0rd","jobRole":"Builder"}'
-  ```
-  A `201` with a user object (no password) means the API and MySQL are wired up. On first run, TypeORM `synchronize` creates the tables automatically.
+- Open **`http://localhost:3000/api`** — Swagger UI lists all routes.
+- Open **`http://localhost:5173`** — the login/signup page loads.
+- Sign up, then log in; you should land on the tasks screen.
 
 ## Troubleshooting
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
-| `Configuration key "mysql" is missing` / `MySQL configuration is missing` | `NODE_CONFIG_DIR` not set, so node-config can't find the YAML | Set `NODE_CONFIG_DIR=./src/configuration` (step 3) |
-| `ECONNREFUSED 127.0.0.1:3306` | MySQL not running | `docker compose up -d`, wait for it to be healthy |
-| `400 Bad Request` on signup | Missing/invalid field (e.g. bad `jobRole`) | Send `username`, `password`, and a valid `jobRole` (`Builder` or `Supervisor`) |
-| Protected route returns `403` | Missing/unknown `username` header | Send a `username` header for an existing user (see [API](../reference/api.md)) |
+| `MySQL configuration is missing` | `config/local.yaml` missing or has wrong keys | Create it with `mysql.username` and `mysql.password` |
+| `ECONNREFUSED 127.0.0.1:3306` | MySQL not running | `docker compose up -d mysql` |
+| API returns `500` on signup | `auth.rounds` not set | Add `auth: rounds: 12` to `config/local.yaml` (or set `AUTH_ROUNDS` env var) |
+| `400 Bad Request` on signup | Missing/invalid field | Send `username`, `password`, and a valid `jobRole` (`Builder` or `Supervisor`) |
+| Protected route returns `403` | Missing `username` header | Send a `username` header matching an existing user (see [API](../reference/api.md)) |
 
 ---
 

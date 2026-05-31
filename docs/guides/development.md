@@ -25,7 +25,7 @@
 | `npm run test:cov` | Unit tests with coverage |
 | `npm run test:e2e` | End-to-end tests (needs MySQL) |
 
-> Remember `NODE_CONFIG_DIR=./src/configuration` for any command that boots the app — see [Getting Started](getting-started.md#steps). The e2e suite sets this itself.
+> The e2e suite sets its own env automatically. For local dev, make sure `config/local.yaml` exists with DB credentials and `auth.rounds` — see [Getting Started](getting-started.md).
 
 ## Conventions in practice
 

@@ -20,7 +20,8 @@ Load the **"Read first"** file only. Open "Then maybe" sources if that's not eno
 | Authentication / the `username` guard        | `docs/architecture/decisions/0003-header-based-authentication.md` | `src/auth/auth.guard.ts`      |
 | Error handling / HTTP status codes           | `docs/architecture/decisions/0004-domain-exceptions-via-global-filter.md` | `src/infrastructure/filters/domain-exception.filter.ts` |
 | Dependency injection / providers             | `docs/architecture/decisions/0002-dependency-injection-with-interface-tokens.md` | `src/*/*.module.ts` |
-| Config / environment variables               | `docs/reference/configuration.md`                   | `src/configuration/*.yaml`                  |
+| Config / environment variables               | `docs/reference/configuration.md`                   | `config/*.yaml`                             |
+| Docker / running the full stack              | `docs/guides/getting-started.md`                    | `docs/guides/deployment.md`                 |
 | Local setup (backend)                        | `docs/guides/getting-started.md`                    | —                                           |
 | Day-to-day backend dev / commands            | `docs/guides/development.md`                         | —                                           |
 | The frontend (React SPA) — structure         | `docs/architecture/frontend.md`                     | `frontend/src/`                             |
@@ -38,7 +39,7 @@ Each "Read first" is **one** file. Don't load the whole `docs/` tree.
 - **What it is:** A construction task log (users, job types, tasks) — a **NestJS REST API** (repo root) plus a **React SPA** (`frontend/`).
 - **Backend stack:** TypeScript / NestJS 11 / TypeORM / MySQL 8 / `node-config` / Swagger. Entry: `src/main.ts` → `src/app.module.ts`.
 - **Frontend stack:** Vite / React 19 / TypeScript / MUI / Zustand / React Router / Axios. Entry: `frontend/src/main.tsx` → `App.tsx`. See [Frontend architecture](docs/architecture/frontend.md).
-- **How it runs:** backend — `npm run start:dev` boots Nest on `:3000` (Swagger on `/api`); frontend — `cd frontend && npm run dev` serves the SPA on `:5173`, talking to the API at `VITE_API_URL`.
+- **How it runs:** `docker compose up --build` starts everything (MySQL + API + frontend + phpMyAdmin). For local dev: `npm run start:dev` boots Nest on `:3000` (Swagger on `/api`); `cd frontend && npm run dev` serves the SPA on `:5173`. See [Getting Started](docs/guides/getting-started.md).
 - **Two npm projects:** the root (`package.json`) and `frontend/` each have their own deps and scripts; install/run in the right directory.
 
 ## Conventions (follow these)
@@ -55,7 +56,7 @@ Each "Read first" is **one** file. Don't load the whole `docs/` tree.
 
 - ✅ Add new domain failures as named `Error` subclasses ending in `…NotFoundException` / `…AlreadyExistsException` / `…Creation|Update|DeletionException` so the filter maps them to 404/409/500.
 - ✅ Run `npm run lint` and `npm test` before declaring work done; run `npm run test:e2e` if you touched controllers, entities, or the DB.
-- ✅ Keep config keys in sync across `src/configuration/default.yaml`, `local.yaml`, and `custom-environment-variables.yaml`.
+- ✅ Keep config keys in sync across `config/default.yaml`, `config/local.yaml`, and `config/custom-environment-variables.yaml`.
 - ❌ Don't introduce a circular import by importing a sibling entity through its barrel `index.ts`.
 - ❌ Don't rely on `synchronize` for production schema changes — it's disabled when `NODE_ENV=production` and there are **no migrations**. See [Deployment](docs/guides/deployment.md).
 - ❌ Don't add new dependencies without flagging it.
@@ -104,7 +105,7 @@ Frontend (in `frontend/`):
 | Request/response shapes | `src/<module>/<module>.dto.ts` |
 | Domain errors | `src/<module>/<module>.errors.ts` |
 | Config, DB, error filter | `src/infrastructure/` |
-| Config values | `src/configuration/*.yaml` |
+| Config values | `config/*.yaml` |
 | Bootstrap | `src/main.ts` |
 | Tests | `*.spec.ts` (unit), `test/*.e2e-spec.ts` (e2e) |
 | **Frontend** entry / routing | `frontend/src/main.tsx`, `frontend/src/App.tsx` |

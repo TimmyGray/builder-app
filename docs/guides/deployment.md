@@ -1,6 +1,6 @@
 # Deployment
 
-> **Summary:** How to build and run Builder App for production, and the two things that change there: `synchronize` is off and config comes from environment variables.
+> **Summary:** How to run Builder App in a non-local environment using Docker Compose, and what changes compared to local dev.
 > **Read this when:** You're shipping the app to a non-local environment.
 > **Audience:** both
 > **Related:** [Configuration](../reference/configuration.md) · [Data model](../architecture/data-model.md)
@@ -9,59 +9,79 @@
 
 ---
 
-## Build and run
+## Docker Compose
+
+The project ships with a `docker-compose.yml` that starts all four services:
+
+| Service | Image | Port |
+|---------|-------|------|
+| MySQL 8 | `mysql:8.4` | 3306 |
+| NestJS API | built from `Dockerfile` | 3000 |
+| React frontend | built from `frontend/Dockerfile` | 5173 |
+| phpMyAdmin | `phpmyadmin:5-apache` | 8080 |
+
+```bash
+cp .env.example .env   # then adjust values as needed
+docker compose up --build
+```
+
+The API waits for MySQL to pass its healthcheck before starting. On first boot, `entrypoint.sh` runs the seed script (if `SEED_DATABASE=true`) then starts the app with `node dist/main`.
+
+### Environment variables
+
+Configure via `.env` in the repo root (see `.env.example`):
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SEED_DATABASE` | `true` | Run the seed on startup if the DB is empty |
+| `AUTH_ROUNDS` | `10` | bcrypt cost factor |
+| `FRONTEND_URL` | `http://localhost:5173` | CORS allowed origin for the API |
+| `VITE_API_URL` | `http://localhost:3000` | API base URL baked into the frontend dev server |
+
+MySQL credentials are hardcoded in `docker-compose.yml` (`builder`/`builder`). Override them there or via `.env` if needed for a shared/staging environment.
+
+Full variable reference: [Configuration](../reference/configuration.md).
+
+---
+
+## Manual build (without Docker)
 
 ```bash
 npm ci
 npm run build            # compiles to dist/
-NODE_ENV=production NODE_CONFIG_DIR=./src/configuration node dist/main
+node dist/main
 ```
 
-`npm run start:prod` is the shortcut for `node dist/main`. The process listens on `PORT` (default `3000`) and serves Swagger at `/api`.
+`npm run start:prod` is a shortcut for `node dist/main`. The process listens on `PORT` (default `3000`).
 
-> `NODE_CONFIG_DIR` must still point at the configuration directory so node-config can load the YAML and apply env-var overrides. The compiled config files ship under `dist/` too; point at whichever you deploy. See [Configuration](../reference/configuration.md#node_config_dir).
+Configuration is read from `config/` at startup. In a non-Docker environment, set env vars to override defaults (see [Configuration](../reference/configuration.md#config-keys)).
 
-## What changes in production
+---
 
-| Concern | Local | Production (`NODE_ENV=production`) |
-|---------|-------|-----------------------------------|
-| TypeORM `synchronize` | **on** (auto-creates schema) | **off** |
-| Config source | `local.yaml` overrides | env vars via `custom-environment-variables.yaml` |
+## What changes vs local dev
+
+| Concern | Local | Docker / production |
+|---------|-------|---------------------|
+| TypeORM `synchronize` | **on** (auto-creates schema) | **on** in Docker (`NODE_ENV=development`), **off** when `NODE_ENV=production` |
+| Config source | `config/local.yaml` overrides | env vars via `config/custom-environment-variables.yaml` |
 | CORS origin | `http://localhost:3000` | set `FRONTEND_URL` |
-
-## Configuration via environment variables
-
-In production, set these (mapped in `src/configuration/custom-environment-variables.yaml`):
-
-| Env var | Maps to |
-|---------|---------|
-| `MYSQL_HOST` | `mysql.host` |
-| `MYSQL_PORT` | `mysql.port` |
-| `MYSQL_USER` | `mysql.username` |
-| `MYSQL_PASSWORD` | `mysql.password` |
-| `MYSQL_DATABASE` | `mysql.database` |
-| `AUTH_ROUNDS` | `auth.rounds` (bcrypt cost factor; mapped as a JSON number) |
-
-Plus direct process env: `PORT`, `FRONTEND_URL`, `NODE_ENV`, `NODE_CONFIG_DIR`. Full details in [Configuration](../reference/configuration.md).
+| Seed | manual (`npm run seed`) | automatic if `SEED_DATABASE=true` |
 
 ## Schema / migrations
 
-Because `synchronize` is **disabled** in production and the project has **no migration files**, the database schema is not created or updated automatically there. Before relying on a production deploy you must apply the schema by one of:
+`synchronize` is disabled when `NODE_ENV=production`. The project has no migration files. Before relying on a production deploy you must either:
 
-- Generating and running TypeORM migrations (not yet set up), or
-- Provisioning the schema out of band.
+- Generate and run TypeORM migrations, or
+- Provision the schema out of band.
 
-> TODO: verify — choose and document a migration strategy before the first production release. Do not depend on `synchronize` for production schema changes (it can drop/alter data).
-
-## Database
-
-A `docker-compose.yml` is provided for **local** MySQL 8 + phpMyAdmin. It is not a production deployment artifact; production should point `MYSQL_*` at a managed/instance database.
+> TODO: verify — choose and document a migration strategy before the first production release.
 
 ## Security checklist before going live
 
-- Replace the header-based `AuthGuard` with a real credential (token). See [ADR-0003](../architecture/decisions/0003-header-based-authentication.md).
-- Tune `AUTH_ROUNDS` for your production hardware (12 is a reasonable default; higher is slower but harder to brute-force).
+- Replace the header-based `AuthGuard` with real credential verification. See [ADR-0003](../architecture/decisions/0003-header-based-authentication.md).
+- Tune `AUTH_ROUNDS` to your production hardware (12 is a reasonable default).
 - Set real DB credentials via env vars, never committed.
+- Remove or restrict phpMyAdmin from public-facing deployments.
 
 ---
 

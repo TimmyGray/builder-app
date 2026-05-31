@@ -27,18 +27,18 @@ For task-based routing, see the **[Context Map in AGENTS.md](../AGENTS.md#contex
 
 | Doc | Summary | Read when |
 |-----|---------|-----------|
-| [Getting started](guides/getting-started.md) | Install, start MySQL, run the API locally | First-time setup (backend) |
+| [Getting started](guides/getting-started.md) | Docker Compose (full stack) or local dev setup | First-time setup |
 | [Development](guides/development.md) | Day-to-day backend workflow, commands, how to add a feature | While developing the API |
 | [Frontend](guides/frontend.md) | Install, run, and develop the React SPA; env, commands, recipes | While developing the web client |
 | [Testing](guides/testing.md) | Unit vs e2e tests, how they're structured, how to run | Adding or running tests |
-| [Deployment](guides/deployment.md) | Building for production, `synchronize`, env-var config | Releasing/deploying |
+| [Deployment](guides/deployment.md) | Docker Compose setup, manual build, production checklist | Releasing/deploying |
 
 ## Reference
 
 | Doc | Summary | Read when |
 |-----|---------|-----------|
 | [API](reference/api.md) | Every endpoint, its body, auth, and status codes | Calling or extending the API |
-| [Configuration](reference/configuration.md) | Config keys, env-var overrides, `NODE_CONFIG_DIR` | Configuring the app |
+| [Configuration](reference/configuration.md) | Config keys, env-var overrides, local vs Docker config | Configuring the app |
 | [Glossary](reference/glossary.md) | Domain & project terms | A term is unclear |
 
 ## Architecture Decision Records
