@@ -23,6 +23,16 @@ export class CreateTaskDto {
     @IsNumber()
     jobTypeId!: number;
 
+    @ApiPropertyOptional({ description: 'Initial status of the task (defaults to ToBeDone)', enum: TaskStatus, example: TaskStatus.TBD })
+    @IsOptional()
+    @IsEnum(TaskStatus)
+    status?: TaskStatus;
+
+    @ApiPropertyOptional({ description: 'Completion date when creating an already-completed task (ISO 8601); also forces status to Completed', example: '2026-05-30T12:00:00.000Z' })
+    @IsOptional()
+    @IsDateString()
+    dateOfCompletion?: string;
+
     @ApiPropertyOptional({ description: 'Amount of work done, in the job type\'s measure (only when the job type has a measure)', example: 24 })
     @IsOptional()
     @IsNumber()

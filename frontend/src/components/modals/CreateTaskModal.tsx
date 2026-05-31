@@ -19,8 +19,10 @@ import { useUsersStore } from '@/stores/usersStore';
 import { useJobTypesStore } from '@/stores/jobTypesStore';
 import { useTasksStore } from '@/stores/tasksStore';
 import { useNotifyStore } from '@/stores/notifyStore';
-import { createTask, type TaskScopeInput } from '@/api/tasks';
-import { MEASURE_LABELS } from '@/types/api';
+import { createTask, type TaskCreateInput } from '@/api/tasks';
+import { MEASURE_LABELS, type TaskStatus } from '@/types/api';
+
+const STATUS_OPTIONS: TaskStatus[] = ['ToBeDone', 'InProgress', 'Completed', 'Cancelled'];
 
 interface Props {
   open: boolean;
@@ -38,6 +40,8 @@ export function CreateTaskModal({ open, onClose }: Props) {
 
   const [userId, setUserId] = useState<number | ''>('');
   const [jobTypeId, setJobTypeId] = useState<number | ''>('');
+  const [status, setStatus] = useState<TaskStatus>('ToBeDone');
+  const [dateOfCompletion, setDateOfCompletion] = useState('');
   const [scopeValue, setScopeValue] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -47,6 +51,8 @@ export function CreateTaskModal({ open, onClose }: Props) {
       if (jobTypes.length === 0) fetchJobTypes();
       setUserId('');
       setJobTypeId('');
+      setStatus('ToBeDone');
+      setDateOfCompletion('');
       setScopeValue('');
     }
   }, [open, users.length, jobTypes.length, fetchUsers, fetchJobTypes]);
@@ -61,12 +67,14 @@ export function CreateTaskModal({ open, onClose }: Props) {
     if (!userId || !jobTypeId || scopeInvalid) return;
     setSubmitting(true);
     try {
-      const scope: TaskScopeInput = {};
+      const input: TaskCreateInput = {};
+      if (status !== 'ToBeDone') input.status = status;
+      if (dateOfCompletion) input.dateOfCompletion = dateOfCompletion;
       if (trimmedScope !== '') {
-        if (measure) scope.quantity = Number(trimmedScope);
-        else scope.scopeOfWork = trimmedScope;
+        if (measure) input.quantity = Number(trimmedScope);
+        else input.scopeOfWork = trimmedScope;
       }
-      const task = await createTask(userId as number, jobTypeId as number, scope);
+      const task = await createTask(userId as number, jobTypeId as number, input);
       addTask(task);
       notify('Task created', 'success');
       onClose();
@@ -114,6 +122,27 @@ export function CreateTaskModal({ open, onClose }: Props) {
               ))}
             </Select>
           </FormControl>
+
+          <FormControl fullWidth size="small">
+            <InputLabel>Status</InputLabel>
+            <Select value={status} onChange={(e) => { setStatus(e.target.value as TaskStatus); if (e.target.value !== 'Completed') setDateOfCompletion(''); }} label="Status">
+              {STATUS_OPTIONS.map((s) => (
+                <MenuItem key={s} value={s}>{s}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {status === 'Completed' && (
+            <TextField
+              fullWidth
+              size="small"
+              type="date"
+              label="Date of Completion"
+              value={dateOfCompletion}
+              onChange={(e) => setDateOfCompletion(e.target.value)}
+              slotProps={{ inputLabel: { shrink: true } }}
+            />
+          )}
 
           {selectedJobType && (
             <TextField

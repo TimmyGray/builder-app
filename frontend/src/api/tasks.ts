@@ -11,12 +11,17 @@ export interface TaskScopeInput {
   scopeOfWork?: string;
 }
 
+export interface TaskCreateInput extends TaskScopeInput {
+  status?: TaskStatus;
+  dateOfCompletion?: string;
+}
+
 export const createTask = async (
   userId: number,
   jobTypeId: number,
-  scope: TaskScopeInput = {},
+  input: TaskCreateInput = {},
 ): Promise<TaskResponse> => {
-  const { data } = await apiClient.post('/tasks', { userId, jobTypeId, ...scope });
+  const { data } = await apiClient.post('/tasks', { userId, jobTypeId, ...input });
   return data;
 };
 

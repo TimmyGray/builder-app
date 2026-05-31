@@ -29,16 +29,20 @@ export class TasksService implements ITasksService {
     ) { }
 
     async createTask(createTaskDto: CreateTaskDto): Promise<TaskResponseDto> {
-        const { userId, jobTypeId, quantity, scopeOfWork } = createTaskDto;
+        const { userId, jobTypeId, status, dateOfCompletion, quantity, scopeOfWork } = createTaskDto;
 
         await this.ensureUserExists(userId);
         const jobType = await this.getJobTypeOrThrow(jobTypeId);
         this.validateScope(jobType.measure, quantity, scopeOfWork);
 
+        const resolvedStatus = dateOfCompletion !== undefined ? TaskStatus.Completed : status;
+
         try {
             const task = await this.tasksRepository.insert({
                 user: { id: userId },
                 jobType: { id: jobTypeId },
+                status: resolvedStatus,
+                dateOfCompletion: dateOfCompletion ? new Date(dateOfCompletion) : undefined,
                 quantity: quantity ?? null,
                 scopeOfWork: scopeOfWork ?? null,
             });
