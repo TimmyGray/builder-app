@@ -12,6 +12,12 @@ services:
       MYSQL_PASSWORD: builder
     volumes:
       - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   phpmyadmin:
     image: phpmyadmin:5-apache
@@ -24,6 +30,41 @@ services:
     environment:
       PMA_HOST: mysql
       PMA_PORT: 3306
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: builder-app-api
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: builder
+      MYSQL_PASSWORD: builder
+      MYSQL_DATABASE: builder_app
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      SEED_DATABASE: ${SEED_DATABASE:-true}
+      AUTH_ROUNDS: ${AUTH_ROUNDS:-10}
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: builder-app-frontend
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}
 
 volumes:
   mysql_data:

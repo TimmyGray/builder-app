@@ -10,13 +10,13 @@ import { TaskStatus } from '../tasks/tasks.dto';
 
 const dataSource = new DataSource({
     type: 'mysql',
-    host: process.env.DB_HOST ?? 'localhost',
-    port: Number(process.env.DB_PORT ?? 3306),
-    username: process.env.DB_USERNAME ?? 'builder',
-    password: process.env.DB_PASSWORD ?? 'builder',
-    database: process.env.DB_DATABASE ?? 'builder_app',
+    host: process.env.MYSQL_HOST ?? 'localhost',
+    port: Number(process.env.MYSQL_PORT ?? 3306),
+    username: process.env.MYSQL_USER ?? 'builder',
+    password: process.env.MYSQL_PASSWORD ?? 'builder',
+    database: process.env.MYSQL_DATABASE ?? 'builder_app',
     entities: [User, JobType, Task],
-    synchronize: false,
+    synchronize: true,
 });
 
 const SEED_PASSWORD = 'Stroyka2024!';
@@ -138,10 +138,12 @@ async function seed() {
     const jobTypeRepo = dataSource.getRepository(JobType);
     const taskRepo = dataSource.getRepository(Task);
 
-    console.log('Clearing existing data...');
-    await taskRepo.createQueryBuilder().delete().from(Task).execute();
-    await userRepo.createQueryBuilder().delete().from(User).execute();
-    await jobTypeRepo.createQueryBuilder().delete().from(JobType).execute();
+    const existingUsers = await userRepo.count();
+    if (existingUsers > 0) {
+        console.log(`Database already has data (${existingUsers} users found). Skipping seed.`);
+        await dataSource.destroy();
+        return;
+    }
 
     console.log('Seeding users...');
     const password = await bcrypt.hash(SEED_PASSWORD, BCRYPT_ROUNDS);

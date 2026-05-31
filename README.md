@@ -9,35 +9,100 @@ Builder App is a construction log made of two parts in one repository:
 - **Backend** (repo root) — a [NestJS](https://nestjs.com/) 11 REST API over TypeORM and MySQL, with Swagger docs. It manages **users**, **job types** (e.g. "Bricklaying"), and **tasks** (a job type assigned to a user, tracked through a status lifecycle). Organised as feature modules (`auth`, `users`, `tasks`, `job-type`) over a shared `infrastructure` module for configuration, the database connection, and global error handling.
 - **Frontend** (`frontend/`) — a Vite + React 19 single-page app (MUI, Zustand, React Router, Axios) that consumes the API. See **[Frontend architecture](docs/architecture/frontend.md)**.
 
-## Quick start
+## Starting the app
 
-**Backend** (API + database):
+There are two ways to run the application: **Docker** (everything in one command) or **locally** (backend and frontend started separately).
+
+---
+
+### Option 1 — Docker Compose (recommended)
+
+Starts MySQL, the NestJS API, and the Vite frontend all at once. Requires [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+
+```bash
+# Copy the example env file (defaults are fine for local use)
+cp .env.example .env
+
+# Build images and start all services
+docker compose up --build
+```
+
+| Service | URL |
+|---------|-----|
+| Frontend (Vite) | http://localhost:5173 |
+| API | http://localhost:3000 |
+| Swagger UI | http://localhost:3000/api |
+| phpMyAdmin | http://localhost:8080 |
+
+**Database seeding** is controlled by the `SEED_DATABASE` variable in `.env` (default `true`). The seed script is idempotent — it checks whether the database is empty first and skips if data already exists.
+
+To wipe the database and start fresh:
+
+```bash
+docker compose down -v   # removes containers + the mysql_data volume
+docker compose up --build
+```
+
+**Environment variables** (see `.env.example`):
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SEED_DATABASE` | `true` | Run the seed script on startup if the DB is empty |
+| `AUTH_ROUNDS` | `10` | bcrypt rounds for password hashing |
+| `FRONTEND_URL` | `http://localhost:5173` | Allowed CORS origin for the API |
+| `VITE_API_URL` | `http://localhost:3000` | API base URL used by the frontend |
+
+---
+
+### Option 2 — Local development
+
+Requires **Node 20+** and a running **MySQL 8** instance (you can still use `docker compose up -d mysql` for just the DB).
+
+**1. Database**
+
+```bash
+docker compose up -d mysql
+```
+
+**2. Backend**
 
 ```bash
 # Install dependencies
 npm install
 
-# Start the MySQL database (Docker)
-docker compose up -d
+# (Optional) seed the database
+npm run seed
 
-# Run the API in watch mode (see the config note below)
+# Start the API in watch mode — listens on http://localhost:3000
 npm run start:dev
 ```
 
-> **Config gotcha:** the app reads YAML config from `src/configuration/` via `node-config`, which only looks there if `NODE_CONFIG_DIR` is set. See **[Getting Started](docs/guides/getting-started.md)** and **[Configuration](docs/reference/configuration.md)**.
+Configuration is read from `config/` via `node-config`. Secrets and local overrides go in `config/local.yaml` (gitignored). See `config/default.yaml` for available keys and `config/custom-environment-variables.yaml` for the env-var mapping.
 
-Requires **Node 20+** and a reachable **MySQL 8** instance. Once running, the API listens on `http://localhost:3000` and Swagger UI is at `http://localhost:3000/api`.
+`config/local.yaml` example:
+```yaml
+mysql:
+  username: builder
+  password: builder
 
-**Frontend** (React SPA) — with the API running:
+auth:
+  rounds: 12
+```
+
+**3. Frontend**
 
 ```bash
 cd frontend
 npm install
-cp .env.example .env      # set VITE_API_URL if the API isn't on :3000
-npm run dev               # Vite dev server on http://localhost:5173
+cp .env.example .env     # VITE_API_URL=http://localhost:3000
+npm run dev              # Vite dev server on http://localhost:5173
 ```
 
-Set `FRONTEND_URL=http://localhost:5173` for the API so CORS allows the SPA. See the **[Frontend guide](docs/guides/frontend.md)**.
+Or run both backend and frontend together from the repo root:
+
+```bash
+npm run start:all
+```
 
 ## Documentation
 
