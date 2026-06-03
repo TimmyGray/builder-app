@@ -25,10 +25,28 @@ export class TasksRepository {
         await this.repository.delete({ id });
     }
 
-    async findAll(): Promise<Task[]> {
-        return await this.repository.find({
-            order: { updatedAt: 'DESC' },
-            relations: { user: true, jobType: true }
-        });
+    async findWithCursor(
+        limit: number,
+        cursor?: { updatedAt: Date; id: number },
+    ): Promise<[Task[], boolean]> {
+        const qb = this.repository
+            .createQueryBuilder('task')
+            .leftJoinAndSelect('task.user', 'user')
+            .leftJoinAndSelect('task.jobType', 'jobType')
+            .orderBy('task.updatedAt', 'DESC')
+            .addOrderBy('task.id', 'DESC')
+            .take(limit + 1);
+
+        if (cursor) {
+            qb.where(
+                '(task.updatedAt < :updatedAt) OR (task.updatedAt = :updatedAt AND task.id < :id)',
+                { updatedAt: cursor.updatedAt, id: cursor.id },
+            );
+        }
+
+        const rows = await qb.getMany();
+        const hasNext = rows.length > limit;
+        if (hasNext) rows.pop();
+        return [rows, hasNext];
     }
 }

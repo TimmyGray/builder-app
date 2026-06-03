@@ -1,4 +1,5 @@
-import { IsNotEmpty, IsEnum, IsOptional, IsNumber, IsDateString, IsString, IsPositive, MaxLength } from 'class-validator';
+import { IsNotEmpty, IsEnum, IsOptional, IsNumber, IsDateString, IsString, IsPositive, MaxLength, IsInt, Min, Max } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 // Import directly from the dto files (not the barrels) to avoid a circular
 // dependency: a barrel pulls in its entity, which imports the tasks barrel back.
@@ -130,4 +131,30 @@ export class DeleteTaskDto {
     @IsNotEmpty()
     @IsNumber()
     id!: number;
+}
+
+export class GetTasksQueryDto {
+    @ApiPropertyOptional({ description: 'Number of tasks per page (1–100)', example: 10, default: 10 })
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    @Min(1)
+    @Max(100)
+    limit?: number;
+
+    @ApiPropertyOptional({ description: 'Opaque cursor returned by the previous page; absent means first page' })
+    @IsOptional()
+    @IsString()
+    cursor?: string;
+}
+
+export class CursorTasksResponseDto {
+    @ApiProperty({ description: 'Tasks for the current page', type: [TaskResponseDto] })
+    data!: TaskResponseDto[];
+
+    @ApiProperty({ description: 'Cursor to pass as `cursor` to fetch the next page; null when there are no more pages', nullable: true })
+    nextCursor!: string | null;
+
+    @ApiProperty({ description: 'Whether more pages exist after this one' })
+    hasNext!: boolean;
 }

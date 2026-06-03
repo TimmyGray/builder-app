@@ -93,14 +93,15 @@ describe('/tasks (e2e)', () => {
 
   // ── GET /tasks ───────────────────────────────────────────────────────────────
 
-  it('GET /tasks returns an array containing the created task', async () => {
+  it('GET /tasks returns a paginated response containing the created task', async () => {
     const res = await request(app.getHttpServer())
       .get('/tasks')
       .set('username', USER_1.username)
       .expect(200);
 
-    expect(Array.isArray(res.body)).toBe(true);
-    const found = res.body.find((t: { id: number }) => t.id === mainTaskId);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(typeof res.body.hasNext).toBe('boolean');
+    const found = res.body.data.find((t: { id: number }) => t.id === mainTaskId);
     expect(found).toBeDefined();
     expect(found.user.id).toBe(userId1);
     expect(found.jobType).toBe(JOB_TYPE_NAME);

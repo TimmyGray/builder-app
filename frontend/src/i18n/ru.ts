@@ -58,6 +58,9 @@ const ru = {
   'tasks.delete.confirmText': 'Вы уверены, что хотите удалить задачу «{{name}}»? Это действие нельзя отменить.',
   'tasks.deleted': 'Задача удалена',
   'tasks.deleteFailed': 'Не удалось удалить задачу',
+  'tasks.pagination.prev': 'Назад',
+  'tasks.pagination.next': 'Вперёд',
+  'tasks.pagination.rowsPerPage': 'Строк на странице',
 
   // Job Types page
   'jobTypes.title': 'Типы работ',

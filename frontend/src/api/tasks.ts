@@ -1,8 +1,13 @@
 import { apiClient } from './client';
-import type { TaskResponse, TaskStatus } from '@/types/api';
+import type { CursorPaginatedResponse, TaskResponse, TaskStatus } from '@/types/api';
 
-export const getTasks = async (): Promise<TaskResponse[]> => {
-  const { data } = await apiClient.get('/tasks');
+export const getTasks = async (
+  limit = 10,
+  cursor?: string,
+): Promise<CursorPaginatedResponse<TaskResponse>> => {
+  const { data } = await apiClient.get('/tasks', {
+    params: { limit, ...(cursor ? { cursor } : {}) },
+  });
   return data;
 };
 

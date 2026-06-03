@@ -6,6 +6,7 @@ import {
     Patch,
     Delete,
     Param,
+    Query,
     ParseIntPipe,
     HttpCode,
     UseGuards
@@ -15,13 +16,16 @@ import {
     CreateTaskDto,
     UpdateTaskDto,
     DeleteTaskDto,
-    TaskResponseDto
+    TaskResponseDto,
+    GetTasksQueryDto,
+    CursorTasksResponseDto,
 } from './tasks.dto';
 import {
     ApiTags,
     ApiOperation,
     ApiBody,
     ApiParam,
+    ApiQuery,
     ApiOkResponse,
     ApiCreatedResponse,
     ApiNotFoundResponse,
@@ -39,10 +43,12 @@ export class TasksController {
     constructor(private readonly tasksService: ITasksService) { }
 
     @Get()
-    @ApiOperation({ summary: 'Get all tasks' })
-    @ApiOkResponse({ description: 'List of tasks', type: [TaskResponseDto] })
-    getAllTasks(): Promise<TaskResponseDto[]> {
-        return this.tasksService.getAllTasks();
+    @ApiOperation({ summary: 'Get tasks (cursor-paginated)' })
+    @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Tasks per page (1–100, default 10)' })
+    @ApiQuery({ name: 'cursor', required: false, type: String, description: 'Opaque cursor from the previous response; absent = first page' })
+    @ApiOkResponse({ description: 'Cursor-paginated tasks', type: CursorTasksResponseDto })
+    getTasks(@Query() query: GetTasksQueryDto): Promise<CursorTasksResponseDto> {
+        return this.tasksService.getTasks(query);
     }
 
     @Get(':id')

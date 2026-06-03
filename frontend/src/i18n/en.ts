@@ -56,6 +56,9 @@ const en = {
   'tasks.delete.confirmText': 'Are you sure you want to delete the task «{{name}}»? This cannot be undone.',
   'tasks.deleted': 'Task deleted',
   'tasks.deleteFailed': 'Failed to delete task',
+  'tasks.pagination.prev': 'Previous',
+  'tasks.pagination.next': 'Next',
+  'tasks.pagination.rowsPerPage': 'Rows per page',
 
   // Job Types page
   'jobTypes.title': 'Job Types',

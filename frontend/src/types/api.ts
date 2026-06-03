@@ -49,6 +49,12 @@ export interface TaskResponse {
   updatedAt: string;
 }
 
+export interface CursorPaginatedResponse<T> {
+  data: T[];
+  nextCursor: string | null;
+  hasNext: boolean;
+}
+
 export interface ApiError {
   statusCode: number;
   message: string;

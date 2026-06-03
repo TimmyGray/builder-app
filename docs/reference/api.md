@@ -48,14 +48,15 @@
 
 ## Tasks — `src/tasks/tasks.controller.ts` (entire controller 🔒)
 
-| Method | Path | Body | Success | Errors |
-|--------|------|------|---------|--------|
-| `GET` | `/tasks` | — | `200` `TaskResponseDto[]` | `403` |
+| Method | Path | Input | Success | Errors |
+|--------|------|-------|---------|--------|
+| `GET` | `/tasks` | Query `?limit=10&cursor=` | `200` `CursorTasksResponseDto` | `403` · `422` bad cursor |
 | `GET` | `/tasks/:id` | — | `200` `TaskResponseDto` | `404` · `403` |
-| `POST` | `/tasks` | `CreateTaskDto` `{ userId, jobTypeId, quantity?, scopeOfWork? }` | `201` `TaskResponseDto` | `404` user/job type not found · `403` · `400` invalid / scope mismatch |
-| `PATCH` | `/tasks` | `UpdateTaskDto` `{ id, status?, dateOfCompletion?, userId?, quantity?, scopeOfWork? }` | `200` `TaskResponseDto` | `404` task/target user · `403` · `400` invalid / scope mismatch |
-| `DELETE` | `/tasks` | `DeleteTaskDto` `{ id }` | `204` | `404` · `403` |
+| `POST` | `/tasks` | Body `CreateTaskDto` `{ userId, jobTypeId, quantity?, scopeOfWork? }` | `201` `TaskResponseDto` | `404` user/job type not found · `403` · `400` invalid / scope mismatch |
+| `PATCH` | `/tasks` | Body `UpdateTaskDto` `{ id, status?, dateOfCompletion?, userId?, quantity?, scopeOfWork? }` | `200` `TaskResponseDto` | `404` task/target user · `403` · `400` invalid / scope mismatch |
+| `DELETE` | `/tasks` | Body `DeleteTaskDto` `{ id }` | `204` | `404` · `403` |
 
+> **Cursor pagination:** `GET /tasks` uses server-side cursor pagination. Omit `cursor` to get the first page. Pass the `nextCursor` value from the response as `cursor` to fetch the next page. `hasNext: false` and `nextCursor: null` mean no more pages. `limit` defaults to `10`, max `100`. A malformed `cursor` returns `422`.
 > **REST quirk:** `DELETE` on tasks and job types takes the id in the **request body**, not the URL.
 > **Update behaviour:** providing `dateOfCompletion` forces `status` to `Completed`.
 > **Scope-of-work:** `quantity` (a positive number) is for **measured** job types; `scopeOfWork` (free text) is for **unmeasured** ones. Sending the wrong one for the job type's `measure`, or both at once, returns `400`. Both are optional. See [Data model](../architecture/data-model.md#scope-of-work-rule).
@@ -67,6 +68,7 @@ Defined in the `*.dto.ts` files (the source of truth):
 - **`UserResponseDto`** — `{ id, username, jobRole, createdAt, updatedAt }` (never includes `password`).
 - **`JobTypeResponseDto`** — `{ id, name, description: string | null, measure: Measure | null }`.
 - **`TaskResponseDto`** — `{ id, user: { id, username, jobRole }, jobType: string, measure: Measure | null, quantity: number | null, scopeOfWork: string | null, status, dateOfCompletion, createdAt, updatedAt }` (`measure` is the job type's unit, included for display).
+- **`CursorTasksResponseDto`** — `{ data: TaskResponseDto[], nextCursor: string | null, hasNext: boolean }`. The cursor is an opaque base64 string encoding `{ updatedAt, id }` — treat it as a black box.
 
 Enums: `jobRole` ∈ {`Builder`, `Supervisor`}; `status` ∈ {`ToBeDone`, `InProgress`, `Completed`, `Cancelled`}; `measure` ∈ {`m`, `liters`, `m^2`, `m^3`, `kg`}. See [Glossary](glossary.md).
 

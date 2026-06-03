@@ -83,7 +83,7 @@ The core domain: a task assigns a **job type** to a **user** and tracks a status
 
 - **Routes:** `GET /tasks`, `GET /tasks/:id`, `POST /tasks`, `PATCH /tasks`, `DELETE /tasks` — all behind `AuthGuard`.
 - **Service:** `ITasksService` → `TasksService`. Validates the referenced user and job type before create/reassign; setting `dateOfCompletion` forces status to `Completed`.
-- **Repository:** `TasksRepository` — always loads the `user` and `jobType` relations.
+- **Repository:** `TasksRepository` — always loads the `user` and `jobType` relations. `findWithCursor(limit, cursor?)` implements cursor pagination via QueryBuilder (`ORDER BY updatedAt DESC, id DESC`); the compound `@Index(['updatedAt', 'id'])` on `Task` covers this sort.
 - **Depends on:** `UsersModule` and `JobTypeModule` (uses both repositories), `MainDb`.
 - **Status lifecycle:** `ToBeDone` → `InProgress` → `Completed` / `Cancelled` (see [`TaskStatus`](../reference/glossary.md#task-status)).
 

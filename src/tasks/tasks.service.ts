@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, UnprocessableEntityException } from '@nestjs/common';
 import { ITasksService } from './tasks.interface';
 import {
     CreateTaskDto,
@@ -6,6 +6,8 @@ import {
     UpdateTaskDto,
     DeleteTaskDto,
     TaskStatus,
+    GetTasksQueryDto,
+    CursorTasksResponseDto,
 } from './tasks.dto';
 import { TasksRepository } from './tasks.repository';
 import { Task } from './tasks.entity';
@@ -112,9 +114,31 @@ export class TasksService implements ITasksService {
         return this.toResponse(task);
     }
 
-    async getAllTasks(): Promise<TaskResponseDto[]> {
-        const tasks = await this.tasksRepository.findAll();
-        return tasks.map(task => this.toResponse(task));
+    async getTasks(query: GetTasksQueryDto): Promise<CursorTasksResponseDto> {
+        const limit = query.limit ?? 10;
+
+        let cursorObj: { updatedAt: Date; id: number } | undefined;
+        if (query.cursor) {
+            try {
+                const parsed = JSON.parse(Buffer.from(query.cursor, 'base64').toString('utf8'));
+                cursorObj = { updatedAt: new Date(parsed.updatedAt), id: parsed.id };
+            } catch {
+                throw new UnprocessableEntityException('Invalid cursor value.');
+            }
+        }
+
+        const [tasks, hasNext] = await this.tasksRepository.findWithCursor(limit, cursorObj);
+
+        const lastTask = tasks[tasks.length - 1];
+        const nextCursor = hasNext && lastTask
+            ? Buffer.from(JSON.stringify({ updatedAt: lastTask.updatedAt, id: lastTask.id })).toString('base64')
+            : null;
+
+        return {
+            data: tasks.map(t => this.toResponse(t)),
+            nextCursor,
+            hasNext,
+        };
     }
 
     private async ensureUserExists(userId: number): Promise<void> {

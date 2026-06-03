@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Button,
   Chip,
   IconButton,
+  MenuItem,
+  Select,
   Typography,
   Dialog,
   DialogTitle,
@@ -45,9 +47,11 @@ const fmtTimestamp = (d: string | null, locale: string) =>
 const fmtDateOnly = (d: string | null, locale: string) =>
   d ? new Date(d).toLocaleDateString(DATE_LOCALE[locale] ?? 'en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }) : '—';
 
+const PAGE_SIZE_OPTIONS = [10, 25, 50];
+
 export function TasksPage() {
   const { t, i18n } = useTranslation();
-  const { tasks, loading, fetchTasks, removeTask } = useTasksStore();
+  const { tasks, hasNext, loading, fetchTasks, limit, cursorStack, setLimit, pushCursor, popCursor, removeTask } = useTasksStore();
   const jobTypes = useJobTypesStore((s) => s.jobTypes);
   const fetchJobTypes = useJobTypesStore((s) => s.fetchJobTypes);
   const notify = useNotifyStore((s) => s.notify);
@@ -58,8 +62,19 @@ export function TasksPage() {
   const [deleteTarget, setDeleteTarget] = useState<TaskResponse | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => { fetchTasks(); }, [fetchTasks]);
+  const currentCursor = cursorStack[cursorStack.length - 1];
+
+  useEffect(() => { fetchTasks(limit, currentCursor); }, [currentCursor, limit, fetchTasks]);
   useEffect(() => { fetchJobTypes(); }, [fetchJobTypes]);
+
+  const handleNext = useCallback(() => {
+    const { nextCursor } = useTasksStore.getState();
+    if (nextCursor) pushCursor(nextCursor);
+  }, [pushCursor]);
+
+  const handlePrev = useCallback(() => { popCursor(); }, [popCursor]);
+
+  const handleLimitChange = useCallback((newLimit: number) => { setLimit(newLimit); }, [setLimit]);
 
   const descByName = useMemo(
     () => new Map(jobTypes.map((jt) => [jt.name, jt.description])),
@@ -246,8 +261,8 @@ export function TasksPage() {
             loading={loading}
             autoHeight
             disableRowSelectionOnClick
-            pageSizeOptions={[10, 25, 50]}
-            initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
+            hideFooterPagination
+            hideFooter
             onRowClick={(params) => setViewTarget(params.row as TaskResponse)}
             sx={{
               border: 'none',
@@ -255,6 +270,49 @@ export function TasksPage() {
             }}
             getRowId={(row) => row.id}
           />
+
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              gap: 1.5,
+              px: 2,
+              py: 1.5,
+              borderTop: `1px solid ${alpha('#7c3aed', 0.1)}`,
+            }}
+          >
+            <Typography variant="caption" color="text.secondary">
+              {t('tasks.pagination.rowsPerPage')}
+            </Typography>
+            <Select
+              value={limit}
+              onChange={(e) => handleLimitChange(e.target.value as number)}
+              size="small"
+              variant="outlined"
+              sx={{ fontSize: '0.8rem', minWidth: 64 }}
+            >
+              {PAGE_SIZE_OPTIONS.map((n) => (
+                <MenuItem key={n} value={n}>{n}</MenuItem>
+              ))}
+            </Select>
+            <Button
+              size="small"
+              variant="outlined"
+              disabled={cursorStack.length <= 1 || loading}
+              onClick={handlePrev}
+            >
+              {t('tasks.pagination.prev')}
+            </Button>
+            <Button
+              size="small"
+              variant="outlined"
+              disabled={!hasNext || loading}
+              onClick={handleNext}
+            >
+              {t('tasks.pagination.next')}
+            </Button>
+          </Box>
         </Box>
 
         <CreateTaskModal open={createOpen} onClose={() => setCreateOpen(false)} />

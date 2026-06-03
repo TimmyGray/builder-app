@@ -4,7 +4,8 @@ import {
     PrimaryGeneratedColumn,
     ManyToOne,
     UpdateDateColumn,
-    CreateDateColumn
+    CreateDateColumn,
+    Index
 } from 'typeorm';
 import { User } from '../users/users.entity';
 import { JobType } from '../job-type/job-type.entity';
@@ -17,6 +18,7 @@ const decimalTransformer = {
 };
 
 @Entity('tasks')
+@Index(['updatedAt', 'id'])
 export class Task {
     @PrimaryGeneratedColumn()
     id!: number;

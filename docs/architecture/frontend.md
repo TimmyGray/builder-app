@@ -106,12 +106,14 @@ Five Zustand stores in `frontend/src/stores/`:
 | Store | Holds | Key behaviour |
 |-------|-------|---------------|
 | `authStore` | `user: UserResponse \| null` | Wrapped in `persist` (localStorage key **`auth`**). `setUser`, `clearUser`, `isAuthenticated()`. |
-| `tasksStore` | `tasks`, `loading` | `fetchTasks` (initial load) + local `addTask` / `replaceTask` / `removeTask`. |
+| `tasksStore` | `tasks`, `nextCursor`, `hasNext`, `loading`, `limit`, `cursorStack` | `fetchTasks(limit?, cursor?)` (server-side cursor pagination) + `setLimit` / `pushCursor` / `popCursor` (pagination actions) + local `addTask` / `replaceTask` / `removeTask`. `limit` and `cursorStack` are stored here so pagination position survives navigation. |
 | `jobTypesStore` | `jobTypes`, `loading` | `fetchJobTypes` + `addJobType` / `replaceJobType` / `removeJobType`. |
 | `usersStore` | `users`, `loading` | `fetchUsers` only — populates assignee dropdowns. |
 | `notifyStore` | `notification` (`message`, `severity`, `key`) | `notify(message, severity)` / `clear`; drives `GlobalSnackbar`. |
 
 **Update pattern:** the store is a cache, not an orchestrator. A page loads via `fetch*` on mount; a mutation is done by the component calling the `api/` wrapper directly, then folding the returned entity into the store with `add*`/`replace*`/`remove*` (no automatic re-fetch). Stores are read via hook selectors, e.g. `useTasksStore((s) => s.tasks)`.
+
+**Tasks pagination:** `TasksPage` manages a cursor stack — an array of cursors where each entry is the cursor used to fetch that page (`undefined` = first page). `handleNext` pushes the `nextCursor` returned by the API; `handlePrev` pops the stack. Changing the page size resets the stack to `[undefined]`. Because this state lives in `tasksStore` (not component state), it survives navigating away and back.
 
 ## Localisation (i18n)
 
@@ -165,7 +167,7 @@ Clicking a **job-type card** opens `ViewJobTypeModal` — name, measure chip, an
 
 ## Types & the backend contract
 
-`frontend/src/types/api.ts` defines `UserResponse`, `JobTypeResponse`, `TaskResponse` (+ `TaskUser`), `UserJobRole`, `TaskStatus`, and `ApiError` **by hand** to match the backend DTOs/entities. There is no codegen, so when a backend DTO changes (`src/<module>/<module>.dto.ts`) the matching frontend type must be updated too. See the [Data model](data-model.md) and [API Reference](../reference/api.md) for the source of truth.
+`frontend/src/types/api.ts` defines `UserResponse`, `JobTypeResponse`, `TaskResponse` (+ `TaskUser`), `UserJobRole`, `TaskStatus`, `CursorPaginatedResponse<T>`, and `ApiError` **by hand** to match the backend DTOs/entities. There is no codegen, so when a backend DTO changes (`src/<module>/<module>.dto.ts`) the matching frontend type must be updated too. See the [Data model](data-model.md) and [API Reference](../reference/api.md) for the source of truth.
 
 > TODO: verify — if an OpenAPI/Swagger client generator is added later, replace the hand-written types and note it here.
 
